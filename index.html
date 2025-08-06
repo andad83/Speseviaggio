@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for trash icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -57,6 +59,29 @@
             cursor: not-allowed;
             opacity: 0.7;
         }
+        .delete-icon {
+            color: #ef4444; /* red-500 */
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.2s ease-in-out;
+        }
+        .delete-icon:hover {
+            color: #dc2626; /* red-600 */
+        }
+        .participant-checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .participant-checkbox-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+        .summary-positive {
+            color: #16a34a; /* green-600 */
+        }
+        .summary-negative {
+            color: #dc2626; /* red-600 */
+        }
     </style>
 </head>
 <body>
@@ -74,6 +99,9 @@
                 </button>
                 <button id="view-expenses-btn" class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
                     Vedi Totale Spese
+                </button>
+                <button id="add-income-btn" class="w-full py-3 px-6 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Gestisci Entrate
                 </button>
             </div>
             <p id="user-id-display" class="mt-8 text-xs text-gray-500 hidden">
@@ -94,7 +122,7 @@
                     />
                 </div>
                 <div>
-                    <label for="expense-cost" class="block text-sm font-medium text-gray-700 mb-1">Costo Spesa (INR):</label>
+                    <label for="expense-cost" class="block text-sm font-medium text-gray-700 mb-1">Costo Spesa (LKR):</label>
                     <input
                         type="number"
                         id="expense-cost"
@@ -110,9 +138,17 @@
                         id="expense-description"
                         rows="3"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Es. Biglietto aereo per Delhi, Pasto al ristorante"
+                        placeholder="Es. Biglietto aereo per Colombo, Pasto al ristorante"
                         required
                     ></textarea>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Partecipanti alla Spesa:</label>
+                    <div id="expense-participants-checkboxes" class="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto bg-gray-50">
+                        <p id="loading-expense-participants" class="text-gray-500 text-sm">Caricamento partecipanti...</p>
+                        <p id="no-expense-participants" class="text-gray-500 text-sm hidden">Nessun partecipante registrato. Aggiungine in "Gestisci Entrate".</p>
+                        <!-- Checkboxes will be inserted here -->
+                    </div>
                 </div>
                 <button
                     type="submit"
@@ -132,37 +168,207 @@
         </div>
 
         <div id="view-expenses-list-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-3xl mx-auto my-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Totale Spese</h2>
-            <div id="expenses-list-content">
-                <!-- La lista delle spese verrà inserita qui -->
-                <p class="text-center text-gray-600" id="loading-expenses">Caricamento spese...</p>
-                <p class="text-center text-gray-600 hidden" id="no-expenses">Nessuna spesa registrata.</p>
-                <div class="overflow-x-auto rounded-lg shadow-md mb-6 hidden" id="expenses-table-wrapper">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Riepilogo Spese e Entrate</h2>
+            <div id="summary-section" class="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Riepilogo Partecipanti</h3>
+                <p class="text-center text-gray-600" id="loading-summary">Calcolo riepilogo...</p>
+                <p class="text-center text-gray-600 hidden" id="no-summary-data">Nessun dato per il riepilogo. Aggiungi spese e entrate.</p>
+                <div id="summary-table-wrapper" class="overflow-x-auto hidden">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-100">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Data
+                                <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Partecipante
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Costo (INR)
+                                <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Entrate (LKR)
                                 </th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Descrizione
+                                <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Spese (LKR)
+                                </th>
+                                <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                    Differenza (LKR)
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="expenses-table-body">
-                            <!-- Righe delle spese -->
+                        <tbody class="bg-white divide-y divide-gray-200" id="summary-table-body">
+                            <!-- Summary rows will be inserted here -->
                         </tbody>
                     </table>
                 </div>
-                <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-cost-display">
-                    Costo Totale: <span id="total-cost-value">0.00</span> INR
+                <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-summary-display">
+                    Totale Entrate Registrate: <span id="total-income-summary-value">0.00</span> LKR
                 </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Dettaglio Spese</h2>
+            <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-cost-display-top">
+                Totale Generale Spese: <span id="total-cost-value-top">0.00</span> LKR
+            </p>
+            <p class="text-center text-gray-600" id="loading-expenses">Caricamento spese...</p>
+            <p class="text-center text-gray-600 hidden" id="no-expenses">Nessuna spesa registrata.</p>
+            <div class="overflow-x-auto rounded-lg shadow-md mb-6 hidden" id="expenses-table-wrapper">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Data
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Costo (LKR)
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Descrizione
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Partecipanti
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Azione
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="expenses-table-body">
+                        <!-- Righe delle spese -->
+                    </tbody>
+                </table>
             </div>
             <button
                 id="back-to-main-from-view"
+                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Torna alla schermata principale
+            </button>
+        </div>
+
+        <!-- Nuova sezione Entrate -->
+        <div id="income-management-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-md mx-auto my-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Gestisci Entrate</h2>
+
+            <div class="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Gestisci Partecipanti Conosciuti</h3>
+                <form id="add-known-participant-form" class="space-y-4 mb-4">
+                    <div>
+                        <label for="known-participant-name" class="block text-sm font-medium text-gray-700 mb-1">Nome Partecipante:</label>
+                        <input
+                            type="text"
+                            id="known-participant-name"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                            placeholder="Es. Mario Rossi"
+                            required
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        id="add-known-participant-btn"
+                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    >
+                        Aggiungi Partecipante
+                    </button>
+                </form>
+                <div id="known-participants-list" class="mb-4">
+                    <h4 class="text-md font-semibold text-gray-700 mb-2">Lista Partecipanti:</h4>
+                    <ul id="known-participants-ul" class="bg-white border border-gray-200 rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                        <li id="loading-known-participants" class="text-gray-500 text-sm">Caricamento partecipanti...</li>
+                        <li id="no-known-participants" class="text-gray-500 text-sm hidden">Nessun partecipante aggiunto.</li>
+                    </ul>
+                </div>
+                <p id="known-participant-message" class="message"></p>
+            </div>
+
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Aggiungi Nuova Entrata</h3>
+            <form id="income-participant-form" class="space-y-4 mb-6">
+                <div>
+                    <label for="participant-name" class="block text-sm font-medium text-gray-700 mb-1">Nome Partecipante:</label>
+                    <input
+                        type="text"
+                        id="participant-name"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="Es. Mario Rossi"
+                    />
+                </div>
+                <div>
+                    <label for="participant-amount" class="block text-sm font-medium text-gray-700 mb-1">Importo Versato (LKR):</label>
+                    <input
+                        type="number"
+                        id="participant-amount"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="Es. 5000"
+                        step="0.01"
+                    />
+                </div>
+                <button
+                    type="button"
+                    id="add-participant-to-income-btn"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400"
+                >
+                    Aggiungi Partecipante all'Entrata
+                </button>
+            </form>
+
+            <div id="current-participants-list" class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Partecipanti di questa Entrata:</h3>
+                <ul id="income-participants-ul" class="bg-gray-50 border border-gray-200 rounded-md p-3 space-y-2">
+                    <li id="no-income-participants-msg" class="text-gray-500 text-sm">Nessun partecipante aggiunto a questa entrata.</li>
+                </ul>
+                <div class="text-right text-md font-bold text-gray-700 mt-3">
+                    Totale Entrate Attuali: <span id="current-income-total">0.00</span> LKR
+                </div>
+            </div>
+
+            <form id="save-income-entry-form" class="space-y-4">
+                <div>
+                    <label for="income-description" class="block text-sm font-medium text-gray-700 mb-1">Descrizione Entrata (Opzionale):</label>
+                    <textarea
+                        id="income-description"
+                        rows="2"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                        placeholder="Es. Fondo comune per il viaggio"
+                    ></textarea>
+                </div>
+                <button
+                    type="submit"
+                    id="save-income-btn"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled
+                >
+                    Salva Entrata
+                </button>
+            </form>
+            <p id="income-message" class="message"></p>
+
+            <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3 text-center">Entrate Registrate:</h3>
+            <div class="overflow-x-auto rounded-lg shadow-md mb-6">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Data
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Totale (LKR)
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Descrizione
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Dettagli
+                            </th>
+                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Azione
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="incomes-table-body">
+                        <tr id="loading-incomes-row"><td colspan="5" class="px-6 py-4 text-center text-gray-600">Caricamento entrate...</td></tr>
+                        <tr id="no-incomes-row" class="hidden"><td colspan="5" class="px-6 py-4 text-center text-gray-600">Nessuna entrata registrata.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <button
+                id="back-to-main-from-income"
                 class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
                 Torna alla schermata principale
@@ -173,7 +379,8 @@
     <!-- Modale Password -->
     <div id="password-modal-overlay" class="modal-overlay hidden">
         <div class="modal-content">
-            <h3 class="text-lg font-bold text-gray-900 mb-4 text-center">Inserisci Password</h3>
+            <h3 class="text-lg font-bold text-gray-900 mb-4 text-center" id="password-modal-title">Inserisci Password</h3>
+            <p class="text-gray-600 text-sm mb-4 text-center" id="password-modal-message">Per procedere, inserisci la password "admin".</p>
             <input
                 type="password"
                 id="password-input"
@@ -202,7 +409,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, Timestamp, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // **************************************************************************************************
         // *** ATTENZIONE: INSERISCI QUI LA TUA CONFIGURAZIONE FIREBASE PERSONALE!                     ***
@@ -224,32 +431,41 @@
         let auth;
         let currentUserId = null;
         let firebaseReady = false;
+        let currentPasswordCallback = null; // Callback per la conferma password
+
+        let knownParticipants = []; // Lista globale dei partecipanti conosciuti
 
         // Funzione per mostrare/nascondere le viste
         function showView(viewId) {
             document.getElementById('main-screen').classList.add('hidden');
             document.getElementById('add-expense-form-container').classList.add('hidden');
             document.getElementById('view-expenses-list-container').classList.add('hidden');
+            document.getElementById('income-management-container').classList.add('hidden');
 
             document.getElementById(viewId).classList.remove('hidden');
 
-            // Se stiamo mostrando la vista delle spese, aggiornale
+            // Aggiorna le viste quando vengono mostrate
             if (viewId === 'view-expenses-list-container') {
                 fetchAndDisplayExpenses();
+                calculateAndDisplaySummary(); // Calcola e mostra il riepilogo
+            } else if (viewId === 'income-management-container') {
+                fetchKnownParticipants(); // Carica i partecipanti conosciuti
+                fetchAndDisplayIncomes(); // Carica le entrate registrate
+                resetIncomeForm(); // Resetta il form di aggiunta entrata
+            } else if (viewId === 'add-expense-form-container') {
+                renderExpenseParticipantsCheckboxes(); // Renderizza i checkbox dei partecipanti
             }
         }
 
         // --- Inizializzazione Firebase e Autenticazione ---
         async function initFirebase() {
             try {
-                // Logga la configurazione usata per debugging
                 console.log("Configurazione Firebase usata:", firebaseConfig);
 
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
 
-                // Ascolta i cambiamenti dello stato di autenticazione
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         currentUserId = user.uid;
@@ -258,13 +474,11 @@
                         firebaseReady = true;
                         console.log("Firebase e autenticazione pronti. User ID:", currentUserId);
                     } else {
-                        // Se non autenticato, prova ad autenticare in modo anonimo
                         try {
                             await signInAnonymously(auth);
                             currentUserId = auth.currentUser?.uid || crypto.randomUUID();
                         } catch (error) {
                             console.error("Errore durante l'autenticazione anonima:", error);
-                            // Genera un ID casuale se l'autenticazione fallisce completamente
                             currentUserId = crypto.randomUUID();
                         } finally {
                             document.getElementById('actual-user-id').textContent = currentUserId;
@@ -273,14 +487,13 @@
                             console.log("Autenticazione completata (o fallback), User ID:", currentUserId);
                         }
                     }
-                    // Abilita i pulsanti e nascondi il messaggio di caricamento una volta che Firebase è pronto
                     document.getElementById('initial-loading-message').classList.add('hidden');
                     document.getElementById('add-expense-btn').disabled = false;
                     document.getElementById('view-expenses-btn').disabled = false;
+                    document.getElementById('add-income-btn').disabled = false;
                 });
             } catch (error) {
                 console.error("Errore durante l'inizializzazione di Firebase (catch esterno):", error);
-                // In caso di errore grave nell'inizializzazione, usa comunque un ID casuale e abilita i pulsanti
                 currentUserId = crypto.randomUUID();
                 document.getElementById('actual-user-id').textContent = currentUserId;
                 document.getElementById('user-id-display').classList.remove('hidden');
@@ -288,35 +501,49 @@
                 document.getElementById('initial-loading-message').classList.add('hidden');
                 document.getElementById('add-expense-btn').disabled = false;
                 document.getElementById('view-expenses-btn').disabled = false;
+                document.getElementById('add-income-btn').disabled = false;
             }
         }
 
-        // --- Gestione del Modale Password ---
+        // --- Gestione Modale Password (riutilizzata per delete, add expense, add income) ---
         const passwordModalOverlay = document.getElementById('password-modal-overlay');
         const passwordInput = document.getElementById('password-input');
         const passwordError = document.getElementById('password-error');
         const confirmPasswordBtn = document.getElementById('confirm-password-btn');
         const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+        const passwordModalTitle = document.getElementById('password-modal-title');
+        const passwordModalMessage = document.getElementById('password-modal-message');
 
-        document.getElementById('add-expense-btn').addEventListener('click', () => {
+        function openPasswordModal(title, message, callback) {
+            passwordModalTitle.textContent = title;
+            passwordModalMessage.textContent = message;
             passwordInput.value = '';
             passwordError.classList.add('hidden');
             passwordModalOverlay.classList.remove('hidden');
-            passwordInput.focus(); // Metti il focus sul campo password
-        });
+            passwordInput.focus();
+            currentPasswordCallback = callback;
+        }
 
         confirmPasswordBtn.addEventListener('click', () => {
             if (passwordInput.value === 'admin') {
                 passwordModalOverlay.classList.add('hidden');
-                showView('add-expense-form-container');
+                if (currentPasswordCallback) {
+                    currentPasswordCallback(true);
+                }
             } else {
                 passwordError.textContent = 'Password errata. Riprova.';
                 passwordError.classList.remove('hidden');
+                if (currentPasswordCallback) {
+                    currentPasswordCallback(false);
+                }
             }
         });
 
         cancelPasswordBtn.addEventListener('click', () => {
             passwordModalOverlay.classList.add('hidden');
+            if (currentPasswordCallback) {
+                currentPasswordCallback(false);
+            }
         });
 
         passwordInput.addEventListener('keypress', (e) => {
@@ -325,6 +552,113 @@
             }
         });
 
+        // --- Gestione Partecipanti Conosciuti (Master List) ---
+        const knownParticipantNameInput = document.getElementById('known-participant-name');
+        const addKnownParticipantForm = document.getElementById('add-known-participant-form');
+        const knownParticipantsUl = document.getElementById('known-participants-ul');
+        const loadingKnownParticipants = document.getElementById('loading-known-participants');
+        const noKnownParticipants = document.getElementById('no-known-participants');
+        const knownParticipantMessage = document.getElementById('known-participant-message');
+
+        const KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
+
+        async function fetchKnownParticipants() {
+            if (!db || !firebaseReady) {
+                console.error("Firebase non pronto per recuperare i partecipanti conosciuti.");
+                loadingKnownParticipants.textContent = 'Errore: Applicazione non pronta per recuperare i partecipanti.';
+                knownParticipantsUl.innerHTML = '';
+                knownParticipantsUl.appendChild(loadingKnownParticipants);
+                return;
+            }
+
+            loadingKnownParticipants.classList.remove('hidden');
+            noKnownParticipants.classList.add('hidden');
+            knownParticipantsUl.innerHTML = ''; // Pulisci la lista precedente
+            knownParticipantsUl.appendChild(loadingKnownParticipants);
+
+            onSnapshot(KNOWN_PARTICIPANTS_DOC_REF, (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    knownParticipants = docSnapshot.data().names || [];
+                } else {
+                    knownParticipants = [];
+                }
+                renderKnownParticipantsList();
+                loadingKnownParticipants.classList.add('hidden');
+            }, (error) => {
+                console.error("Errore nel recupero dei partecipanti conosciuti:", error);
+                knownParticipantMessage.textContent = 'Errore nel caricamento dei partecipanti.';
+                knownParticipantMessage.className = 'message error';
+                loadingKnownParticipants.classList.add('hidden');
+                noKnownParticipants.classList.remove('hidden');
+                knownParticipantsUl.innerHTML = '';
+                knownParticipantsUl.appendChild(noKnownParticipants);
+            });
+        }
+
+        function renderKnownParticipantsList() {
+            knownParticipantsUl.innerHTML = '';
+            if (knownParticipants.length === 0) {
+                noKnownParticipants.classList.remove('hidden');
+                knownParticipantsUl.appendChild(noKnownParticipants);
+            } else {
+                noKnownParticipants.classList.add('hidden');
+                knownParticipants.forEach((name, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center text-gray-700 text-sm';
+                    li.innerHTML = `
+                        <span>${name}</span>
+                        <button type="button" class="text-red-500 hover:text-red-700 text-xs ml-2" data-name="${name}">Rimuovi</button>
+                    `;
+                    li.querySelector('button').addEventListener('click', (e) => removeKnownParticipant(e.target.dataset.name));
+                    knownParticipantsUl.appendChild(li);
+                });
+            }
+        }
+
+        addKnownParticipantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = knownParticipantNameInput.value.trim();
+
+            if (!name) {
+                knownParticipantMessage.textContent = 'Per favore, inserisci un nome per il partecipante.';
+                knownParticipantMessage.className = 'message error';
+                return;
+            }
+            if (knownParticipants.includes(name)) {
+                knownParticipantMessage.textContent = 'Questo partecipante esiste già.';
+                knownParticipantMessage.className = 'message error';
+                return;
+            }
+
+            knownParticipantNameInput.value = '';
+            knownParticipantMessage.textContent = '';
+
+            try {
+                const updatedParticipants = [...knownParticipants, name];
+                await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
+                knownParticipantMessage.textContent = 'Partecipante aggiunto con successo!';
+                knownParticipantMessage.className = 'message success';
+            } catch (error) {
+                console.error("Errore nell'aggiungere il partecipante:", error);
+                knownParticipantMessage.textContent = 'Errore durante l\'aggiunta del partecipante. Riprova.';
+                knownParticipantMessage.className = 'message error';
+            }
+        });
+
+        async function removeKnownParticipant(nameToRemove) {
+            try {
+                const updatedParticipants = knownParticipants.filter(name => name !== nameToRemove);
+                await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
+                knownParticipantMessage.textContent = `Partecipante '${nameToRemove}' rimosso.`;
+                knownParticipantMessage.className = 'message success';
+            } catch (error) {
+                console.error("Errore nella rimozione del partecipante:", error);
+                knownParticipantMessage.textContent = 'Errore durante la rimozione del partecipante. Riprova.';
+                knownParticipantMessage.className = 'message error';
+            }
+        }
+
+
         // --- Gestione Aggiungi Spesa ---
         const expenseForm = document.getElementById('expense-form');
         const expenseDateInput = document.getElementById('expense-date');
@@ -332,6 +666,53 @@
         const expenseDescriptionInput = document.getElementById('expense-description');
         const expenseMessage = document.getElementById('expense-message');
         const submitExpenseBtn = document.getElementById('submit-expense-btn');
+        const expenseParticipantsCheckboxesDiv = document.getElementById('expense-participants-checkboxes');
+        const loadingExpenseParticipants = document.getElementById('loading-expense-participants');
+        const noExpenseParticipants = document.getElementById('no-expense-participants');
+
+        function renderExpenseParticipantsCheckboxes() {
+            expenseParticipantsCheckboxesDiv.innerHTML = '';
+            if (!firebaseReady) {
+                expenseParticipantsCheckboxesDiv.appendChild(loadingExpenseParticipants);
+                loadingExpenseParticipants.classList.remove('hidden');
+                noExpenseParticipants.classList.add('hidden');
+                return;
+            }
+
+            if (knownParticipants.length === 0) {
+                noExpenseParticipants.classList.remove('hidden');
+                expenseParticipantsCheckboxesDiv.appendChild(noExpenseParticipants);
+                loadingExpenseParticipants.classList.add('hidden');
+            } else {
+                noExpenseParticipants.classList.add('hidden');
+                loadingExpenseParticipants.classList.add('hidden');
+                knownParticipants.forEach(name => {
+                    const div = document.createElement('div');
+                    div.className = 'participant-checkbox-item';
+                    div.innerHTML = `
+                        <input type="checkbox" id="exp-part-${name.replace(/\s/g, '-')}" name="expenseParticipant" value="${name}" checked>
+                        <label for="exp-part-${name.replace(/\s/g, '-')}" class="text-gray-800 text-sm">${name}</label>
+                    `;
+                    expenseParticipantsCheckboxesDiv.appendChild(div);
+                });
+            }
+        }
+
+        document.getElementById('add-expense-btn').addEventListener('click', () => {
+            openPasswordModal(
+                'Inserisci Password',
+                'Per inserire una nuova spesa, inserisci la password "admin".',
+                (confirmed) => {
+                    if (confirmed) {
+                        showView('add-expense-form-container');
+                        // Resetta il form e i checkbox
+                        expenseForm.reset();
+                        expenseMessage.textContent = '';
+                        renderExpenseParticipantsCheckboxes();
+                    }
+                }
+            );
+        });
 
         expenseForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -352,24 +733,32 @@
                 return;
             }
 
+            const selectedParticipants = Array.from(expenseParticipantsCheckboxesDiv.querySelectorAll('input[name="expenseParticipant"]:checked'))
+                                            .map(checkbox => checkbox.value);
+
+            if (selectedParticipants.length === 0 && knownParticipants.length > 0) {
+                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa, o aggiungerne se non ce ne sono.';
+                expenseMessage.className = 'message error';
+                return;
+            }
+
             submitExpenseBtn.disabled = true;
             submitExpenseBtn.classList.add('loading-button');
             submitExpenseBtn.textContent = 'Aggiungendo...';
             expenseMessage.textContent = ''; // Pulisci i messaggi precedenti
 
             try {
-                // Percorso della collezione pubblica per le spese (semplificato per uso esterno)
                 await addDoc(collection(db, `public_travel_expenses`), {
-                    date: Timestamp.fromDate(new Date(date)), // Salva come Timestamp
+                    date: Timestamp.fromDate(new Date(date)),
                     cost: cost,
                     description: description,
-                    timestamp: Timestamp.now() // Per l'ordinamento e la tracciabilità
+                    includedParticipants: selectedParticipants, // Salva i partecipanti inclusi
+                    timestamp: Timestamp.now()
                 });
                 expenseMessage.textContent = 'Spesa aggiunta con successo!';
                 expenseMessage.className = 'message success';
-                expenseDateInput.value = '';
-                expenseCostInput.value = '';
-                expenseDescriptionInput.value = '';
+                expenseForm.reset(); // Resetta il form
+                renderExpenseParticipantsCheckboxes(); // Resetta i checkbox
             } catch (error) {
                 console.error("Errore nell'aggiungere la spesa:", error);
                 expenseMessage.textContent = 'Errore durante l\'aggiunta della spesa. Riprova.';
@@ -381,10 +770,10 @@
             }
         });
 
-        // --- Gestione Visualizzazione Spese ---
+        // --- Gestione Visualizzazione Spese e Cancellazione ---
         const expensesTableBody = document.getElementById('expenses-table-body');
-        const totalCostDisplay = document.getElementById('total-cost-display');
-        const totalCostValue = document.getElementById('total-cost-value');
+        const totalCostDisplayTop = document.getElementById('total-cost-display-top');
+        const totalCostValueTop = document.getElementById('total-cost-value-top');
         const loadingExpenses = document.getElementById('loading-expenses');
         const noExpenses = document.getElementById('no-expenses');
         const expensesTableWrapper = document.getElementById('expenses-table-wrapper');
@@ -393,6 +782,26 @@
             showView('view-expenses-list-container');
         });
 
+        async function handleDeleteExpense(expenseId) {
+            openPasswordModal(
+                'Conferma Cancellazione Spesa',
+                'Per cancellare questa spesa, inserisci la password "admin".',
+                async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            await deleteDoc(doc(db, `public_travel_expenses`, expenseId));
+                            console.log("Spesa cancellata con successo:", expenseId);
+                        } catch (error) {
+                            console.error("Errore durante la cancellazione della spesa:", error);
+                            // Potresti mostrare un messaggio di errore all'utente qui
+                        }
+                    } else {
+                        console.log("Cancellazione annullata o password errata.");
+                    }
+                }
+            );
+        }
+
         function fetchAndDisplayExpenses() {
             if (!db || !currentUserId || !firebaseReady) {
                 console.error("Firebase non pronto per recuperare le spese.");
@@ -400,19 +809,18 @@
                 loadingExpenses.classList.remove('hidden');
                 noExpenses.classList.add('hidden');
                 expensesTableWrapper.classList.add('hidden');
-                totalCostDisplay.classList.add('hidden');
+                totalCostDisplayTop.classList.add('hidden');
                 return;
             }
 
             loadingExpenses.classList.remove('hidden');
             noExpenses.classList.add('hidden');
             expensesTableWrapper.classList.add('hidden');
-            totalCostDisplay.classList.add('hidden');
-            expensesTableBody.innerHTML = ''; // Pulisci le spese precedenti
+            totalCostDisplayTop.classList.add('hidden');
+            expensesTableBody.innerHTML = '';
 
-            // Percorso della collezione pubblica per le spese (semplificato per uso esterno)
             const expensesCollectionRef = collection(db, `public_travel_expenses`);
-            const q = query(expensesCollectionRef); // Nessun ordinamento qui per evitare errori di indice
+            const q = query(expensesCollectionRef);
 
             onSnapshot(q, (snapshot) => {
                 let fetchedExpenses = [];
@@ -423,44 +831,57 @@
                     });
                 });
 
-                // Ordina le spese per data (dal più recente al più vecchio) in JavaScript
                 fetchedExpenses.sort((a, b) => {
                     const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
                     const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
                     return dateB.getTime() - dateA.getTime();
                 });
 
-                expensesTableBody.innerHTML = ''; // Pulisci di nuovo prima di aggiungere
-                let totalCost = 0;
+                expensesTableBody.innerHTML = '';
+                let totalOverallCost = 0;
 
                 if (fetchedExpenses.length === 0) {
                     noExpenses.classList.remove('hidden');
                     expensesTableWrapper.classList.add('hidden');
-                    totalCostDisplay.classList.add('hidden');
+                    totalCostDisplayTop.classList.add('hidden');
                 } else {
                     noExpenses.classList.add('hidden');
                     expensesTableWrapper.classList.remove('hidden');
-                    totalCostDisplay.classList.remove('hidden');
+                    totalCostDisplayTop.classList.remove('hidden');
 
                     fetchedExpenses.forEach(expense => {
                         const row = expensesTableBody.insertRow();
                         const dateCell = row.insertCell();
                         const costCell = row.insertCell();
                         const descriptionCell = row.insertCell();
+                        const participantsCell = row.insertCell(); // Nuova cella per i partecipanti
+                        const actionCell = row.insertCell();
 
                         const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
+                        const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
+                                                ? expense.includedParticipants.join(', ')
+                                                : 'Tutti i partecipanti'; // Default se non specificato
 
                         dateCell.textContent = displayDate;
                         costCell.textContent = expense.cost.toFixed(2);
                         descriptionCell.textContent = expense.description;
+                        participantsCell.textContent = participantsList;
+
+                        const deleteIcon = document.createElement('i');
+                        deleteIcon.className = 'fas fa-trash-alt delete-icon';
+                        deleteIcon.title = 'Cancella spesa';
+                        deleteIcon.addEventListener('click', () => handleDeleteExpense(expense.id));
+                        actionCell.appendChild(deleteIcon);
 
                         dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
                         costCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
                         descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        participantsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
 
-                        totalCost += expense.cost;
+                        totalOverallCost += expense.cost;
                     });
-                    totalCostValue.textContent = totalCost.toFixed(2);
+                    totalCostValueTop.textContent = totalOverallCost.toFixed(2);
                 }
                 loadingExpenses.classList.add('hidden');
             }, (error) => {
@@ -469,9 +890,384 @@
                 loadingExpenses.classList.remove('hidden');
                 noExpenses.classList.add('hidden');
                 expensesTableWrapper.classList.add('hidden');
-                totalCostDisplay.classList.add('hidden');
+                totalCostDisplayTop.classList.add('hidden');
             });
         }
+
+        // --- Gestione Entrate ---
+        const addIncomeBtn = document.getElementById('add-income-btn');
+        const participantNameInput = document.getElementById('participant-name');
+        const participantAmountInput = document.getElementById('participant-amount');
+        const addParticipantToIncomeBtn = document.getElementById('add-participant-to-income-btn');
+        const incomeParticipantsUl = document.getElementById('income-participants-ul');
+        const noIncomeParticipantsMsg = document.getElementById('no-income-participants-msg');
+        const currentIncomeTotalSpan = document.getElementById('current-income-total');
+        const incomeDescriptionInput = document.getElementById('income-description');
+        const saveIncomeBtn = document.getElementById('save-income-btn');
+        const incomeMessage = document.getElementById('income-message');
+        const incomesTableBody = document.getElementById('incomes-table-body');
+        const loadingIncomesRow = document.getElementById('loading-incomes-row');
+        const noIncomesRow = document.getElementById('no-incomes-row');
+
+        let currentIncomeParticipants = []; // Array temporaneo per i partecipanti di una singola entrata
+
+        addIncomeBtn.addEventListener('click', () => {
+            openPasswordModal(
+                'Inserisci Password',
+                'Per gestire le entrate, inserisci la password "admin".',
+                (confirmed) => {
+                    if (confirmed) {
+                        showView('income-management-container');
+                        resetIncomeForm(); // Resetta il form quando si accede alla sezione entrate
+                    }
+                }
+            );
+        });
+
+        addParticipantToIncomeBtn.addEventListener('click', () => {
+            const name = participantNameInput.value.trim();
+            const amount = parseFloat(participantAmountInput.value);
+
+            if (!name || isNaN(amount) || amount <= 0) {
+                incomeMessage.textContent = 'Per favore, inserisci un nome e un importo valido per il partecipante.';
+                incomeMessage.className = 'message error';
+                return;
+            }
+
+            currentIncomeParticipants.push({ name, amount });
+            updateIncomeParticipantsList();
+            participantNameInput.value = '';
+            participantAmountInput.value = '';
+            incomeMessage.textContent = '';
+            saveIncomeBtn.disabled = currentIncomeParticipants.length === 0;
+        });
+
+        function updateIncomeParticipantsList() {
+            incomeParticipantsUl.innerHTML = '';
+            let total = 0;
+            if (currentIncomeParticipants.length === 0) {
+                noIncomeParticipantsMsg.classList.remove('hidden');
+                incomeParticipantsUl.appendChild(noIncomeParticipantsMsg);
+            } else {
+                noIncomeParticipantsMsg.classList.add('hidden');
+                currentIncomeParticipants.forEach((p, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex justify-between items-center text-gray-700 text-sm';
+                    li.innerHTML = `
+                        <span>${p.name}: ${p.amount.toFixed(2)} LKR</span>
+                        <button type="button" class="text-red-500 hover:text-red-700 text-xs ml-2" data-index="${index}">Rimuovi</button>
+                    `;
+                    li.querySelector('button').addEventListener('click', (e) => {
+                        const idx = parseInt(e.target.dataset.index);
+                        currentIncomeParticipants.splice(idx, 1);
+                        updateIncomeParticipantsList();
+                        saveIncomeBtn.disabled = currentIncomeParticipants.length === 0;
+                    });
+                    incomeParticipantsUl.appendChild(li);
+                    total += p.amount;
+                });
+            }
+            currentIncomeTotalSpan.textContent = total.toFixed(2);
+        }
+
+        saveIncomeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            if (!db || !currentUserId || !firebaseReady) {
+                incomeMessage.textContent = 'Errore: Applicazione non pronta. Riprova più tardi.';
+                incomeMessage.className = 'message error';
+                return;
+            }
+
+            if (currentIncomeParticipants.length === 0) {
+                incomeMessage.textContent = 'Per favore, aggiungi almeno un partecipante prima di salvare l\'entrata.';
+                incomeMessage.className = 'message error';
+                return;
+            }
+
+            saveIncomeBtn.disabled = true;
+            saveIncomeBtn.classList.add('loading-button');
+            saveIncomeBtn.textContent = 'Salvando...';
+            incomeMessage.textContent = '';
+
+            const totalAmount = currentIncomeParticipants.reduce((sum, p) => sum + p.amount, 0);
+
+            try {
+                await addDoc(collection(db, `public_incomes`), {
+                    timestamp: Timestamp.now(),
+                    description: incomeDescriptionInput.value.trim() || 'Nessuna descrizione',
+                    participants: currentIncomeParticipants,
+                    totalAmount: totalAmount
+                });
+                incomeMessage.textContent = 'Entrata salvata con successo!';
+                incomeMessage.className = 'message success';
+                resetIncomeForm();
+                fetchAndDisplayIncomes();
+            }
+            catch (error) {
+                console.error("Errore nel salvare l'entrata:", error);
+                incomeMessage.textContent = 'Errore durante il salvataggio dell\'entrata. Riprova.';
+                incomeMessage.className = 'message error';
+            } finally {
+                saveIncomeBtn.disabled = false;
+                saveIncomeBtn.classList.remove('loading-button');
+                saveIncomeBtn.textContent = 'Salva Entrata';
+            }
+        });
+
+        async function handleDeleteIncome(incomeId) {
+            openPasswordModal(
+                'Conferma Cancellazione Entrata',
+                'Per cancellare questa entrata, inserisci la password "admin".',
+                async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            await deleteDoc(doc(db, `public_incomes`, incomeId));
+                            console.log("Entrata cancellata con successo:", incomeId);
+                        } catch (error) {
+                            console.error("Errore durante la cancellazione dell'entrata:", error);
+                        }
+                    } else {
+                        console.log("Cancellazione annullata o password errata.");
+                    }
+                }
+            );
+        }
+
+        function resetIncomeForm() {
+            participantNameInput.value = '';
+            participantAmountInput.value = '';
+            incomeDescriptionInput.value = '';
+            currentIncomeParticipants = [];
+            updateIncomeParticipantsList();
+            saveIncomeBtn.disabled = true;
+            incomeMessage.textContent = '';
+        }
+
+        function fetchAndDisplayIncomes() {
+            if (!db || !currentUserId || !firebaseReady) {
+                console.error("Firebase non pronto per recuperare le entrate.");
+                loadingIncomesRow.classList.remove('hidden');
+                loadingIncomesRow.cells[0].textContent = 'Errore: Applicazione non pronta per recuperare le entrate.';
+                noIncomesRow.classList.add('hidden');
+                incomesTableBody.innerHTML = '';
+                return;
+            }
+
+            loadingIncomesRow.classList.remove('hidden');
+            loadingIncomesRow.cells[0].textContent = 'Caricamento entrate...';
+            noIncomesRow.classList.add('hidden');
+            incomesTableBody.innerHTML = '';
+
+            const incomesCollectionRef = collection(db, `public_incomes`);
+            const q = query(incomesCollectionRef);
+
+            onSnapshot(q, (snapshot) => {
+                let fetchedIncomes = [];
+                snapshot.forEach(doc => {
+                    fetchedIncomes.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                fetchedIncomes.sort((a, b) => {
+                    const dateA = a.timestamp instanceof Timestamp ? a.timestamp.toDate() : new Date(a.timestamp);
+                    const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toDate() : new Date(b.timestamp);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+                incomesTableBody.innerHTML = '';
+
+                if (fetchedIncomes.length === 0) {
+                    noIncomesRow.classList.remove('hidden');
+                    loadingIncomesRow.classList.add('hidden');
+                } else {
+                    noIncomesRow.classList.add('hidden');
+                    loadingIncomesRow.classList.add('hidden');
+
+                    fetchedIncomes.forEach(income => {
+                        const row = incomesTableBody.insertRow();
+                        const dateCell = row.insertCell();
+                        const totalCell = row.insertCell();
+                        const descriptionCell = row.insertCell();
+                        const detailsCell = row.insertCell();
+                        const actionCell = row.insertCell(); // Nuova cella per l'azione
+
+                        const displayDate = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
+
+                        dateCell.textContent = displayDate;
+                        totalCell.textContent = income.totalAmount.toFixed(2) + ' LKR';
+                        descriptionCell.textContent = income.description;
+
+                        const detailsButton = document.createElement('button');
+                        detailsButton.textContent = 'Vedi Dettagli';
+                        detailsButton.className = 'text-blue-600 hover:text-blue-800 text-sm font-medium';
+                        detailsButton.addEventListener('click', () => {
+                            let details = `Dettagli Entrata (${displayDate}, Totale: ${income.totalAmount.toFixed(2)} LKR):\n\n`;
+                            income.participants.forEach(p => {
+                                details += `- ${p.name}: ${p.amount.toFixed(2)} LKR\n`;
+                            });
+                            alert(details);
+                        });
+                        detailsCell.appendChild(detailsButton);
+
+                        const deleteIcon = document.createElement('i');
+                        deleteIcon.className = 'fas fa-trash-alt delete-icon';
+                        deleteIcon.title = 'Cancella entrata';
+                        deleteIcon.addEventListener('click', () => handleDeleteIncome(income.id));
+                        actionCell.appendChild(deleteIcon);
+
+                        dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
+                        totalCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        detailsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
+                    });
+                }
+            }, (error) => {
+                console.error("Errore nel recupero delle entrate:", error);
+                loadingIncomesRow.classList.remove('hidden');
+                loadingIncomesRow.cells[0].textContent = 'Errore nel caricamento delle entrate.';
+                noIncomesRow.classList.add('hidden');
+            });
+        }
+
+        // --- Calcolo e Visualizzazione Riepilogo ---
+        const summaryTableBody = document.getElementById('summary-table-body');
+        const loadingSummary = document.getElementById('loading-summary');
+        const noSummaryData = document.getElementById('no-summary-data');
+        const summaryTableWrapper = document.getElementById('summary-table-wrapper');
+        const totalIncomeSummaryDisplay = document.getElementById('total-income-summary-display');
+        const totalIncomeSummaryValue = document.getElementById('total-income-summary-value');
+
+        async function calculateAndDisplaySummary() {
+            if (!db || !firebaseReady) {
+                console.error("Firebase non pronto per calcolare il riepilogo.");
+                loadingSummary.textContent = 'Errore: Applicazione non pronta per il riepilogo.';
+                loadingSummary.classList.remove('hidden');
+                noSummaryData.classList.add('hidden');
+                summaryTableWrapper.classList.add('hidden');
+                totalIncomeSummaryDisplay.classList.add('hidden');
+                return;
+            }
+
+            loadingSummary.classList.remove('hidden');
+            noSummaryData.classList.add('hidden');
+            summaryTableWrapper.classList.add('hidden');
+            totalIncomeSummaryDisplay.classList.add('hidden');
+            summaryTableBody.innerHTML = '';
+
+            try {
+                // 1. Recupera tutti i dati necessari
+                // Utilizza getDocs per ottenere uno snapshot di query
+                const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
+                const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
+                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
+
+                const allExpenses = [];
+                expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
+
+                const allIncomes = [];
+                incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
+
+                const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
+
+                // 2. Inizializza il riepilogo per ogni partecipante conosciuto
+                const participantSummary = {};
+                currentKnownParticipants.forEach(name => {
+                    participantSummary[name] = { income: 0, expense: 0, balance: 0 };
+                });
+
+                let totalOverallIncome = 0;
+
+                // 3. Calcola le entrate per ogni partecipante
+                allIncomes.forEach(income => {
+                    totalOverallIncome += income.totalAmount;
+                    if (income.participants && Array.isArray(income.participants)) {
+                        income.participants.forEach(p => {
+                            if (participantSummary[p.name]) { // Solo se il partecipante è nella lista conosciuta
+                                participantSummary[p.name].income += p.amount;
+                            } else {
+                                // Se l'entrata ha un partecipante non conosciuto, aggiungilo al riepilogo
+                                participantSummary[p.name] = participantSummary[p.name] || { income: 0, expense: 0, balance: 0 };
+                                participantSummary[p.name].income += p.amount;
+                            }
+                        });
+                    }
+                });
+
+                // 4. Calcola le spese per ogni partecipante
+                allExpenses.forEach(expense => {
+                    const includedForThisExpense = expense.includedParticipants && Array.isArray(expense.includedParticipants) && expense.includedParticipants.length > 0
+                        ? expense.includedParticipants
+                        : currentKnownParticipants; // Se non specificato, tutti i partecipanti conosciuti
+
+                    if (includedForThisExpense.length > 0) {
+                        const costPerPerson = expense.cost / includedForThisExpense.length;
+                        includedForThisExpense.forEach(pName => {
+                            if (participantSummary[pName]) { // Solo se il partecipante è nella lista conosciuta
+                                participantSummary[pName].expense += costPerPerson;
+                            } else {
+                                // Se la spesa ha un partecipante non conosciuto, aggiungilo al riepilogo
+                                participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
+                                participantSummary[pName].expense += costPerPerson;
+                            }
+                        });
+                    }
+                });
+
+                // 5. Calcola la differenza e renderizza la tabella di riepilogo
+                summaryTableBody.innerHTML = '';
+                let hasSummaryData = false;
+                for (const name in participantSummary) {
+                    hasSummaryData = true;
+                    const data = participantSummary[name];
+                    data.balance = data.income - data.expense;
+
+                    const row = summaryTableBody.insertRow();
+                    const nameCell = row.insertCell();
+                    const incomeCell = row.insertCell();
+                    const expenseCell = row.insertCell();
+                    const balanceCell = row.insertCell();
+
+                    nameCell.textContent = name;
+                    incomeCell.textContent = data.income.toFixed(2);
+                    expenseCell.textContent = data.expense.toFixed(2);
+                    balanceCell.textContent = data.balance.toFixed(2);
+
+                    balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
+                    balanceCell.classList.add('font-semibold');
+
+                    nameCell.className = "px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900";
+                    incomeCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
+                    expenseCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
+                    balanceCell.className = "px-3 py-2 whitespace-nowrap text-sm text-right";
+                }
+
+                if (hasSummaryData) {
+                    summaryTableWrapper.classList.remove('hidden');
+                    totalIncomeSummaryDisplay.classList.remove('hidden');
+                    totalIncomeSummaryValue.textContent = totalOverallIncome.toFixed(2);
+                    noSummaryData.classList.add('hidden');
+                } else {
+                    summaryTableWrapper.classList.add('hidden');
+                    totalIncomeSummaryDisplay.classList.add('hidden');
+                    noSummaryData.classList.remove('hidden');
+                }
+
+                loadingSummary.classList.add('hidden');
+
+            } catch (error) {
+                console.error("Errore nel calcolo o visualizzazione del riepilogo:", error);
+                loadingSummary.textContent = 'Errore nel calcolo del riepilogo.';
+                loadingSummary.classList.remove('hidden');
+                noSummaryData.classList.remove('hidden');
+                summaryTableWrapper.classList.add('hidden');
+                totalIncomeSummaryDisplay.classList.add('hidden');
+            }
+        }
+
 
         // --- Pulsanti per tornare alla schermata principale ---
         document.getElementById('back-to-main-from-add').addEventListener('click', () => {
@@ -479,6 +1275,10 @@
         });
 
         document.getElementById('back-to-main-from-view').addEventListener('click', () => {
+            showView('main-screen');
+        });
+
+        document.getElementById('back-to-main-from-income').addEventListener('click', () => {
             showView('main-screen');
         });
 
