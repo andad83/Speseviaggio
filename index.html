@@ -129,6 +129,21 @@
         .overall-balance-text-zero {
             color: #000000; /* black */
         }
+        /* Stili per il pop-up di notifica */
+        #notification-popup {
+            opacity: 0;
+            pointer-events: none; /* Allows clicks to pass through when hidden */
+        }
+        #notification-popup.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #notification-popup.success {
+            background-color: #10b981; /* emerald-500 */
+        }
+        #notification-popup.error {
+            background-color: #ef4444; /* red-500 */
+        }
     </style>
 </head>
 <body>
@@ -270,7 +285,7 @@
             </div>
 
             <!-- Nuova sezione: Differenza Totale Entrate e Spese -->
-            <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white">
+            <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4">
                 <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Differenza Totale</h3>
                 <p class="text-center text-2xl">
                     <span id="overall-balance-value" class="font-bold">0</span> LKR
@@ -278,6 +293,27 @@
             </div>
 
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Dettaglio Spese</h2>
+            <div id="filter-section" class="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Filtra Spese</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label for="filter-date-start" class="block text-sm font-medium text-gray-700 mb-1">Data Inizio:</label>
+                        <input type="date" id="filter-date-start" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="filter-date-end" class="block text-sm font-medium text-gray-700 mb-1">Data Fine:</label>
+                        <input type="date" id="filter-date-end" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="filter-description-input" class="block text-sm font-medium text-gray-700 mb-1">Descrizione:</label>
+                        <input type="text" id="filter-description-input" placeholder="Cerca descrizione..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="apply-filters-btn" class="w-1/2 py-2 px-4 bg-blue-500 text-white font-semibold rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400">Applica Filtri</button>
+                        <button id="reset-filters-btn" class="w-1/2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Reset Filtri</button>
+                    </div>
+                </div>
+            </div>
             <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-cost-display-top">
                 Totale Generale Spese: <span id="total-cost-value-top">0</span> LKR
             </p>
@@ -450,7 +486,7 @@
             </div>
 
             <!-- Riepilogo per il singolo partecipante -->
-            <div id="single-participant-summary-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white hidden">
+            <div id="single-participant-summary-section" class="mb-8 border border-gray-200 rounded-lg p-4 hidden">
                 <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Riepilogo per <span id="single-participant-summary-name"></span></h3>
                 <p class="text-center text-lg text-gray-800">
                     Entrate: <span id="single-participant-income-value" class="font-bold">0</span> LKR
@@ -545,6 +581,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Notification Pop-up -->
+    <div id="notification-popup" class="fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-center text-lg font-semibold hidden transition-opacity duration-500 ease-in-out z-[1001]">
+        <!-- Message will be inserted here -->
     </div>
 
 
@@ -775,6 +816,22 @@
             customDetailsModalOverlay.classList.add('hidden');
         });
 
+        // --- Notification Pop-up ---
+        const notificationPopup = document.getElementById('notification-popup');
+
+        function showNotification(message, type = 'success') { // type can be 'success' or 'error'
+            notificationPopup.textContent = message;
+            notificationPopup.className = `fixed top-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-center text-lg font-semibold transition-opacity duration-500 ease-in-out z-[1001] show ${type}`;
+            
+            setTimeout(() => {
+                notificationPopup.classList.remove('show');
+                // Optionally hide completely after transition for accessibility
+                setTimeout(() => {
+                    notificationPopup.classList.add('hidden');
+                }, 500); // Match CSS transition duration
+            }, 2000); // Display for 2 seconds
+        }
+
 
         // --- Gestione Partecipanti Conosciuti (Master List gestita implicitamente) ---
         // Riferimento al documento che memorizza i nomi dei partecipanti conosciuti
@@ -894,8 +951,6 @@
                 noExpenseParticipants.classList.remove('hidden');
                 individualParticipantsSelectionDiv.appendChild(noExpenseParticipants);
                 loadingExpenseParticipants.classList.add('hidden');
-                allParticipantsRadio.disabled = true;
-                excludeParticipantsRadio.disabled = true;
                 allParticipantsRadio.checked = true;
                 individualParticipantsSelectionDiv.classList.add('hidden');
             } else {
@@ -905,7 +960,7 @@
                 knownParticipants.forEach(name => {
                     const div = document.createElement('div');
                     div.className = 'participant-checkbox-item';
-                    const isChecked = selectedForExpense.length === 0 || selectedForExpense.includes(name); // Default checked if no specific selection or if included
+                    const isChecked = selectedForExpense.length === 0 || selectedForExpense.includes(name);
                     div.innerHTML = `
                         <input type="checkbox" id="exp-part-${name.replace(/\s/g, '-')}" name="expenseParticipant" value="${name}" ${isChecked ? 'checked' : ''}>
                         <label for="exp-part-${name.replace(/\s/g, '-')}" class="text-gray-800 text-sm">${name}</label>
@@ -913,16 +968,14 @@
                     individualParticipantsSelectionDiv.appendChild(div);
                 });
 
-                // Set radio button state based on selectedForExpense
+                const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                 if (selectedForExpense.length === 0 || selectedForExpense.length === knownParticipants.length) {
                     allParticipantsRadio.checked = true;
                     individualParticipantsSelectionDiv.classList.add('hidden');
-                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                     checkboxes.forEach(cb => { cb.disabled = true; });
                 } else {
                     excludeParticipantsRadio.checked = true;
                     individualParticipantsSelectionDiv.classList.remove('hidden');
-                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                     checkboxes.forEach(cb => { cb.disabled = false; });
                 }
             }
@@ -937,7 +990,7 @@
                         showView('add-expense-form-container');
                         expenseFormTitle.textContent = 'Aggiungi Nuova Spesa';
                         submitExpenseBtn.textContent = 'Aggiungi Spesa';
-                        expenseIdToEdit.value = ''; // Clear ID for new entry
+                        expenseIdToEdit.value = '';
                         expenseForm.reset();
                         allParticipantsRadio.checked = true;
                         expenseMessage.textContent = '';
@@ -950,7 +1003,7 @@
         addAnotherExpenseBtn.addEventListener('click', () => {
             expenseFormTitle.textContent = 'Aggiungi Nuova Spesa';
             submitExpenseBtn.textContent = 'Aggiungi Spesa';
-            expenseIdToEdit.value = ''; // Clear ID for new entry
+            expenseIdToEdit.value = '';
             expenseForm.reset();
             allParticipantsRadio.checked = true;
             expenseMessage.textContent = '';
@@ -1042,12 +1095,11 @@
 
                 if (id) {
                     await setDoc(doc(db, `public_travel_expenses`, id), expenseData);
-                    expenseMessage.textContent = 'Spesa modificata con successo!';
+                    showNotification('Spesa modificata con successo!', 'success');
                 } else {
                     await addDoc(collection(db, `public_travel_expenses`), expenseData);
-                    expenseMessage.textContent = 'Spesa aggiunta con successo!';
+                    showNotification('Poveri, ma felici di vivere', 'success'); // Messaggio personalizzato
                 }
-                expenseMessage.className = 'message success';
                 // No reset here, let "Add another expense" button handle it
             } catch (error) {
                 console.error("Errore nell'operazione spesa:", error);
@@ -1072,6 +1124,20 @@
         // Nuovo elemento per la differenza totale
         const overallDifferenceSection = document.getElementById('overall-difference-section');
         const overallBalanceValue = document.getElementById('overall-balance-value');
+        const filterStartDateInput = document.getElementById('filter-date-start');
+        const filterEndDateInput = document.getElementById('filter-date-end');
+        const filterDescriptionInput = document.getElementById('filter-description-input');
+        const applyFiltersBtn = document.getElementById('apply-filters-btn');
+        const resetFiltersBtn = document.getElementById('reset-filters-btn');
+
+
+        applyFiltersBtn.addEventListener('click', () => fetchAndDisplayExpenses());
+        resetFiltersBtn.addEventListener('click', () => {
+            filterStartDateInput.value = '';
+            filterEndDateInput.value = '';
+            filterDescriptionInput.value = '';
+            fetchAndDisplayExpenses();
+        });
 
 
         document.getElementById('view-expenses-btn').addEventListener('click', () => {
@@ -1115,8 +1181,34 @@
             totalCostDisplayTop.classList.add('hidden');
             expensesTableBody.innerHTML = '';
 
-            // Usa allExpensesData che è già aggiornato dal listener onSnapshot
-            let expensesToDisplay = [...allExpensesData]; // Crea una copia per l'ordinamento
+            let expensesToDisplay = [...allExpensesData];
+
+            // Apply filters
+            const filterStartDate = filterStartDateInput.value;
+            const filterEndDate = filterEndDateInput.value;
+            const filterDescription = filterDescriptionInput.value.toLowerCase();
+
+            if (filterStartDate) {
+                const start = new Date(filterStartDate);
+                expensesToDisplay = expensesToDisplay.filter(expense => {
+                    const expenseDate = expense.date instanceof Timestamp ? expense.date.toDate() : new Date(expense.date);
+                    return expenseDate >= start;
+                });
+            }
+            if (filterEndDate) {
+                const end = new Date(filterEndDate);
+                end.setHours(23, 59, 59, 999); // Include the whole end day
+                expensesToDisplay = expensesToDisplay.filter(expense => {
+                    const expenseDate = expense.date instanceof Timestamp ? expense.date.toDate() : new Date(expense.date);
+                    return expenseDate <= end;
+                });
+            }
+            if (filterDescription) {
+                expensesToDisplay = expensesToDisplay.filter(expense =>
+                    expense.description.toLowerCase().includes(filterDescription)
+                );
+            }
+
 
             expensesToDisplay.sort((a, b) => {
                 const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
@@ -1147,22 +1239,20 @@
                     const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
                     const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
                                                 ? expense.includedParticipants.join(', ')
-                                                : 'Nessuno'; // Cambiato da 'N/A' a 'Nessuno'
+                                                : 'Nessuno';
 
-                    // Tronca la lista dei partecipanti per la visualizzazione
                     const maxChars = 25;
                     const truncatedParticipantsList = participantsList.length > maxChars
                             ? participantsList.substring(0, maxChars - 3) + '...'
                             : participantsList;
 
                     dateCell.textContent = displayDate;
-                    costCell.textContent = Math.ceil(expense.cost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                    costCell.textContent = Math.ceil(expense.cost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                     descriptionCell.textContent = expense.description;
                     participantsCell.textContent = truncatedParticipantsList;
 
-                    // Aggiungi evento click per il pop-up se la lista è stata troncata
                     if (participantsList.length > maxChars) {
-                        participantsCell.classList.add('cursor-pointer', 'underline'); // Aggiungi stile per indicare che è cliccabile
+                        participantsCell.classList.add('cursor-pointer', 'underline');
                         participantsCell.title = 'Clicca per vedere tutti i partecipanti';
                         participantsCell.addEventListener('click', () => {
                             openCustomDetailsModal('Partecipanti Spesa', `Partecipanti: ${participantsList}`);
@@ -1189,7 +1279,7 @@
 
                     totalOverallCost += expense.cost;
                 });
-                totalCostValueTop.textContent = Math.ceil(totalOverallCost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                totalCostValueTop.textContent = Math.ceil(totalOverallCost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             }
             loadingExpenses.classList.add('hidden');
         }
@@ -1199,7 +1289,7 @@
 
         function exportDataToCSV() {
             if (!allExpensesData.length && !allIncomesData.length) {
-                alert("Non ci sono dati da esportare.");
+                openCustomDetailsModal('Esporta Dati', "Non ci sono dati da esportare.");
                 return;
             }
 
@@ -1238,8 +1328,9 @@
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
+                showNotification('Dati esportati con successo!', 'success');
             } else {
-                alert("Il tuo browser non supporta il download diretto di file CSV.");
+                openCustomDetailsModal('Esporta Dati', "Il tuo browser non supporta il download diretto di file CSV.");
             }
         }
 
@@ -1312,8 +1403,7 @@
                     participantName: name,
                     amount: amount
                 });
-                incomeMessage.textContent = 'Entrata salvata con successo!';
-                incomeMessage.className = 'message success';
+                showNotification('Siamo più ricchi di prima', 'success'); // Messaggio personalizzato
                 resetIncomeForm(); // Resetta il form
                 fetchAndDisplayIncomes(); // Aggiorna la lista delle entrate
                 addParticipantToKnownList(name); // Aggiungi il partecipante alla lista globale se nuovo
@@ -1565,18 +1655,18 @@
                 overallDifferenceSection.classList.remove('bg-blue-50', 'bg-red-50', 'bg-green-50'); // Rimuovi classi precedenti
                 
                 // Rimuovi classi di testo precedenti
-                overallBalanceValue.classList.remove('text-green-800', 'text-red-800', 'text-black');
+                overallBalanceValue.classList.remove('overall-balance-text-positive', 'overall-balance-text-negative', 'overall-balance-text-zero');
                 overallBalanceValue.classList.add('font-bold'); // Assicurati che sia sempre bold
 
                 if (finalOverallDifference > 0) {
                     overallDifferenceSection.classList.add('bg-green-50');
-                    overallBalanceValue.classList.add('text-green-800');
+                    overallBalanceValue.classList.add('overall-balance-text-positive'); // Applica colore testo
                 } else if (finalOverallDifference < 0) {
                     overallDifferenceSection.classList.add('bg-red-50');
-                    overallBalanceValue.classList.add('text-red-800');
+                    overallBalanceValue.classList.add('overall-balance-text-negative'); // Applica colore testo
                 } else {
                     overallDifferenceSection.classList.add('bg-blue-50'); // Neutro se zero
-                    overallBalanceValue.classList.add('text-black');
+                    overallBalanceValue.classList.add('overall-balance-text-zero'); // Applica colore testo
                 }
 
 
@@ -1729,11 +1819,11 @@
                                 await Promise.all(deletePromises);
                                 console.log(`Tutti i documenti in ${collectionName} cancellati.`);
                             }
-                            alert('Tutti i dati sono stati cancellati con successo!');
+                            openCustomDetailsModal('Dati Cancellati', 'Tutti i dati sono stati cancellati con successo!');
                             showView('main-screen'); // Torna alla schermata principale
                         } catch (error) {
                             console.error("Errore durante la cancellazione di tutti i dati:", error);
-                            alert('Errore durante la cancellazione dei dati. Controlla la console per i dettagli.');
+                            openCustomDetailsModal('Errore', 'Errore durante la cancellazione dei dati. Controlla la console per i dettagli.');
                         }
                     } else {
                         console.log("Cancellazione di tutti i dati annullata o password errata.");
