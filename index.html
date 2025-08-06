@@ -245,37 +245,7 @@
         <div id="income-management-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-md mx-auto my-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Gestisci Entrate</h2>
 
-            <div class="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Gestisci Partecipanti Conosciuti</h3>
-                <form id="add-known-participant-form" class="space-y-4 mb-4">
-                    <div>
-                        <label for="known-participant-name" class="block text-sm font-medium text-gray-700 mb-1">Nome Partecipante:</label>
-                        <input
-                            type="text"
-                            id="known-participant-name"
-                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                            placeholder="Es. Mario Rossi"
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        id="add-known-participant-btn"
-                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    >
-                        Aggiungi Partecipante
-                    </button>
-                </form>
-                <div id="known-participants-list" class="mb-4">
-                    <h4 class="text-md font-semibold text-gray-700 mb-2">Lista Partecipanti:</h4>
-                    <ul id="known-participants-ul" class="bg-white border border-gray-200 rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
-                        <li id="loading-known-participants" class="text-gray-500 text-sm">Caricamento partecipanti...</li>
-                        <li id="no-known-participants" class="text-gray-500 text-sm hidden">Nessun partecipante aggiunto.</li>
-                    </ul>
-                </div>
-                <p id="known-participant-message" class="message"></p>
-            </div>
-
+            <!-- La sezione "Gestisci Partecipanti Conosciuti" è stata rimossa da qui -->
 
             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Aggiungi Nuova Entrata</h3>
             <form id="income-participant-form" class="space-y-4 mb-6">
@@ -557,115 +527,59 @@
             }
         });
 
-        // --- Gestione Partecipanti Conosciuti (Master List) ---
-        const knownParticipantNameInput = document.getElementById('known-participant-name');
-        const addKnownParticipantForm = document.getElementById('add-known-participant-form');
-        const knownParticipantsUl = document.getElementById('known-participants-ul');
-        const loadingKnownParticipants = document.getElementById('loading-known-participants');
-        const noKnownParticipants = document.getElementById('no-known-participants');
-        const knownParticipantMessage = document.getElementById('known-participant-message');
-
-        // Assicurati che db sia inizializzato prima di usarlo qui
+        // --- Gestione Partecipanti Conosciuti (Master List gestita implicitamente) ---
+        // Riferimento al documento che memorizza i nomi dei partecipanti conosciuti
         const KNOWN_PARTICIPANTS_DOC_REF = (function() {
             // Questo pattern assicura che il riferimento al doc sia creato solo quando db è disponibile.
             // Sarà chiamato una volta che initFirebase ha impostato db.
             return doc(getFirestore(initializeApp(firebaseConfig)), `app_settings`, `known_participants`);
         })();
 
-
         async function fetchKnownParticipants() {
             if (!db || !firebaseReady) {
                 console.error("Firebase non pronto per recuperare i partecipanti conosciuti.");
-                loadingKnownParticipants.textContent = 'Errore: Applicazione non pronta per recuperare i partecipanti.';
-                knownParticipantsUl.innerHTML = '';
-                knownParticipantsUl.appendChild(loadingKnownParticipants);
+                // Anche se la UI di gestione è rimossa, i messaggi di caricamento/errore per i checkbox spese sono utili
+                document.getElementById('loading-expense-participants').textContent = 'Errore: App non pronta per caricare i partecipanti.';
+                document.getElementById('loading-expense-participants').classList.remove('hidden');
+                document.getElementById('no-expense-participants').classList.add('hidden');
                 return;
             }
 
-            loadingKnownParticipants.classList.remove('hidden');
-            noKnownParticipants.classList.add('hidden');
-            knownParticipantsUl.innerHTML = ''; // Pulisci la lista precedente
-            knownParticipantsUl.appendChild(loadingKnownParticipants);
-
+            // Non mostriamo più la lista esplicita, ma la carichiamo per le checkbox e il riepilogo
             onSnapshot(KNOWN_PARTICIPANTS_DOC_REF, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     knownParticipants = docSnapshot.data().names || [];
                 } else {
                     knownParticipants = [];
                 }
-                renderKnownParticipantsList();
-                loadingKnownParticipants.classList.add('hidden');
+                // Aggiorna i checkbox delle spese se la vista è attiva
+                if (!document.getElementById('add-expense-form-container').classList.contains('hidden')) {
+                    renderExpenseParticipantsCheckboxes();
+                }
+                // Aggiorna il riepilogo se la vista è attiva
+                if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                    calculateAndDisplaySummary();
+                }
             }, (error) => {
                 console.error("Errore nel recupero dei partecipanti conosciuti:", error);
-                knownParticipantMessage.textContent = 'Errore nel caricamento dei partecipanti.';
-                knownParticipantMessage.className = 'message error';
-                loadingKnownParticipants.classList.add('hidden');
-                noKnownParticipants.classList.remove('hidden');
-                knownParticipantsUl.innerHTML = '';
-                knownParticipantsUl.appendChild(noKnownParticipants);
+                // Messaggi di errore per i checkbox spese
+                document.getElementById('loading-expense-participants').textContent = 'Errore nel caricamento dei partecipanti.';
+                document.getElementById('loading-expense-participants').classList.remove('hidden');
+                document.getElementById('no-expense-participants').classList.add('hidden');
             });
         }
 
-        function renderKnownParticipantsList() {
-            knownParticipantsUl.innerHTML = '';
-            if (knownParticipants.length === 0) {
-                noKnownParticipants.classList.remove('hidden');
-                knownParticipantsUl.appendChild(noKnownParticipants);
-            } else {
-                noKnownParticipants.classList.add('hidden');
-                knownParticipants.forEach((name, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center text-gray-700 text-sm';
-                    li.innerHTML = `
-                        <span>${name}</span>
-                        <button type="button" class="text-red-500 hover:text-red-700 text-xs ml-2" data-name="${name}">Rimuovi</button>
-                    `;
-                    li.querySelector('button').addEventListener('click', (e) => removeKnownParticipant(e.target.dataset.name));
-                    knownParticipantsUl.appendChild(li);
-                });
+        // Funzione per aggiungere un partecipante alla lista globale se non già presente
+        async function addParticipantToKnownList(name) {
+            if (!db || !firebaseReady || knownParticipants.includes(name)) {
+                return; // Non aggiungere se Firebase non è pronto o il partecipante esiste già
             }
-        }
-
-        addKnownParticipantForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = knownParticipantNameInput.value.trim();
-
-            if (!name) {
-                knownParticipantMessage.textContent = 'Per favore, inserisci un nome per il partecipante.';
-                knownParticipantMessage.className = 'message error';
-                return;
-            }
-            if (knownParticipants.includes(name)) {
-                knownParticipantMessage.textContent = 'Questo partecipante esiste già.';
-                knownParticipantMessage.className = 'message error';
-                return;
-            }
-
-            knownParticipantNameInput.value = '';
-            knownParticipantMessage.textContent = '';
-
             try {
                 const updatedParticipants = [...knownParticipants, name];
                 await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
-                knownParticipantMessage.textContent = 'Partecipante aggiunto con successo!';
-                knownParticipantMessage.className = 'message success';
+                console.log(`Partecipante '${name}' aggiunto alla lista conosciuta.`);
             } catch (error) {
-                console.error("Errore nell'aggiungere il partecipante:", error);
-                knownParticipantMessage.textContent = 'Errore durante l\'aggiunta del partecipante. Riprova.';
-                knownParticipantMessage.className = 'message error';
-            }
-        });
-
-        async function removeKnownParticipant(nameToRemove) {
-            try {
-                const updatedParticipants = knownParticipants.filter(name => name !== nameToRemove);
-                await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
-                knownParticipantMessage.textContent = `Partecipante '${nameToRemove}' rimosso.`;
-                knownParticipantMessage.className = 'message success';
-            } catch (error) {
-                console.error("Errore nella rimozione del partecipante:", error);
-                knownParticipantMessage.textContent = 'Errore durante la rimozione del partecipante. Riprova.';
-                knownParticipantMessage.className = 'message error';
+                console.error(`Errore nell'aggiungere '${name}' alla lista conosciuta:`, error);
             }
         }
 
@@ -748,10 +662,16 @@
                                             .map(checkbox => checkbox.value);
 
             if (selectedParticipants.length === 0 && knownParticipants.length > 0) {
-                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa, o aggiungerne se non ce ne sono.';
+                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa.';
                 expenseMessage.className = 'message error';
                 return;
             }
+             if (selectedParticipants.length === 0 && knownParticipants.length === 0) {
+                expenseMessage.textContent = 'Nessun partecipante selezionato. Aggiungi partecipanti tramite le entrate.';
+                expenseMessage.className = 'message error';
+                return;
+            }
+
 
             submitExpenseBtn.disabled = true;
             submitExpenseBtn.classList.add('loading-button');
@@ -875,7 +795,7 @@
 
                         dateCell.textContent = displayDate;
                         costCell.textContent = expense.cost.toFixed(2);
-                        descriptionCell.textContent = descriptionCell.textContent = expense.description; // Fixed typo
+                        descriptionCell.textContent = expense.description;
                         participantsCell.textContent = participantsList;
 
                         const deleteIcon = document.createElement('i');
@@ -1014,6 +934,10 @@
                 incomeMessage.className = 'message success';
                 resetIncomeForm();
                 fetchAndDisplayIncomes();
+
+                // Aggiungi i partecipanti di questa entrata alla lista dei partecipanti conosciuti
+                currentIncomeParticipants.forEach(p => addParticipantToKnownList(p.name));
+
             }
             catch (error) {
                 console.error("Errore nel salvare l'entrata:", error);
@@ -1171,10 +1095,9 @@
 
             try {
                 // 1. Recupera tutti i dati necessari
-                // Utilizza getDocs per ottenere uno snapshot di query
                 const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
                 const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
-                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
+                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF); // Ottieni la lista dei partecipanti conosciuti
 
                 const allExpenses = [];
                 expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
@@ -1182,6 +1105,7 @@
                 const allIncomes = [];
                 incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
 
+                // Assicurati che knownParticipants sia aggiornato prima di usarlo per il riepilogo
                 const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
 
                 // 2. Inizializza il riepilogo per ogni partecipante conosciuto
@@ -1197,13 +1121,9 @@
                     totalOverallIncome += income.totalAmount;
                     if (income.participants && Array.isArray(income.participants)) {
                         income.participants.forEach(p => {
-                            if (participantSummary[p.name]) { // Solo se il partecipante è nella lista conosciuta
-                                participantSummary[p.name].income += p.amount;
-                            } else {
-                                // Se l'entrata ha un partecipante non conosciuto, aggiungilo al riepilogo
-                                participantSummary[p.name] = participantSummary[p.name] || { income: 0, expense: 0, balance: 0 };
-                                participantSummary[p.name].income += p.amount;
-                            }
+                            // Aggiungi il partecipante al riepilogo se non era già nella lista conosciuta
+                            participantSummary[p.name] = participantSummary[p.name] || { income: 0, expense: 0, balance: 0 };
+                            participantSummary[p.name].income += p.amount;
                         });
                     }
                 });
@@ -1217,13 +1137,9 @@
                     if (includedForThisExpense.length > 0) {
                         const costPerPerson = expense.cost / includedForThisExpense.length;
                         includedForThisExpense.forEach(pName => {
-                            if (participantSummary[pName]) { // Solo se il partecipante è nella lista conosciuta
-                                participantSummary[pName].expense += costPerPerson;
-                            } else {
-                                // Se la spesa ha un partecipante non conosciuto, aggiungilo al riepilogo
-                                participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
-                                participantSummary[pName].expense += costPerPerson;
-                            }
+                            // Aggiungi il partecipante al riepilogo se non era già nella lista conosciuta
+                            participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
+                            participantSummary[pName].expense += costPerPerson;
                         });
                     }
                 });
@@ -1231,7 +1147,10 @@
                 // 5. Calcola la differenza e renderizza la tabella di riepilogo
                 summaryTableBody.innerHTML = '';
                 let hasSummaryData = false;
-                for (const name in participantSummary) {
+                // Ordina i partecipanti per nome per una visualizzazione consistente
+                const sortedParticipantNames = Object.keys(participantSummary).sort();
+
+                sortedParticipantNames.forEach(name => {
                     hasSummaryData = true;
                     const data = participantSummary[name];
                     data.balance = data.income - data.expense;
@@ -1254,7 +1173,8 @@
                     incomeCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
                     expenseCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
                     balanceCell.className = "px-3 py-2 whitespace-nowrap text-sm text-right";
-                }
+                });
+
 
                 if (hasSummaryData) {
                     summaryTableWrapper.classList.remove('hidden');
