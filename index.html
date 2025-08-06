@@ -247,7 +247,7 @@
 
             <!-- Nuova sezione: Differenza Totale Entrate e Spese -->
             <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white hidden">
-                <h3 class="text-xl font-bold text-center mb-2">Differenza Totale</h3>
+                <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Differenza Totale</h3>
                 <p class="text-center text-2xl font-extrabold">
                     <span id="overall-balance-value">0,00</span> LKR
                 </p>
@@ -918,7 +918,7 @@
 
                 fetchedExpenses.sort((a, b) => {
                     const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
-                    const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.timestamp);
+                    const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toDate() : new Date(b.timestamp);
                     return dateB.getTime() - dateA.getTime();
                 });
 
@@ -1323,12 +1323,20 @@
                 overallDifferenceSection.classList.remove('hidden');
                 overallBalanceValue.textContent = finalOverallDifference.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 overallDifferenceSection.classList.remove('bg-blue-50', 'bg-red-50', 'bg-green-50'); // Rimuovi classi precedenti
+                
+                // Rimuovi classi di testo precedenti
+                overallBalanceValue.classList.remove('text-green-800', 'text-red-800', 'text-black');
+                overallBalanceValue.classList.add('font-bold'); // Assicurati che sia sempre bold
+
                 if (finalOverallDifference > 0) {
                     overallDifferenceSection.classList.add('bg-green-50');
+                    overallBalanceValue.classList.add('text-green-800');
                 } else if (finalOverallDifference < 0) {
                     overallDifferenceSection.classList.add('bg-red-50');
+                    overallBalanceValue.classList.add('text-red-800');
                 } else {
                     overallDifferenceSection.classList.add('bg-blue-50'); // Neutro se zero
+                    overallBalanceValue.classList.add('text-black');
                 }
 
 
