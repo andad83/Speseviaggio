@@ -130,6 +130,9 @@
                 <button id="view-expenses-btn" class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
                     Vedi Totale Spese
                 </button>
+                <button id="view-single-participant-expenses-btn" class="w-full py-3 px-6 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Vedi Spese Singole
+                </button>
             </div>
             <p id="user-id-display" class="mt-8 text-xs text-gray-500 hidden">
                 ID Utente: <span id="actual-user-id" class="font-mono break-all"></span>
@@ -154,8 +157,8 @@
                         type="number"
                         id="expense-cost"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Es. 1.500,50"
-                        step="0.01"
+                        placeholder="Es. 1.500"
+                        step="1"
                         required
                     />
                 </div>
@@ -241,21 +244,21 @@
                     </table>
                 </div>
                 <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-summary-display">
-                    Totale Entrate Registrate: <span id="total-income-summary-value">0,00</span> LKR
+                    Totale Entrate Registrate: <span id="total-income-summary-value">0</span> LKR
                 </div>
             </div>
 
             <!-- Nuova sezione: Differenza Totale Entrate e Spese -->
-            <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white hidden">
+            <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white">
                 <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Differenza Totale</h3>
-                <p class="text-center text-2xl font-extrabold">
-                    <span id="overall-balance-value">0,00</span> LKR
+                <p class="text-center text-2xl">
+                    <span id="overall-balance-value" class="font-bold">0</span> LKR
                 </p>
             </div>
 
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Dettaglio Spese</h2>
             <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-cost-display-top">
-                Totale Generale Spese: <span id="total-cost-value-top">0,00</span> LKR
+                Totale Generale Spese: <span id="total-cost-value-top">0</span> LKR
             </p>
             <p class="text-center text-gray-600" id="loading-expenses">Caricamento spese...</p>
             <p class="text-center text-gray-600 hidden" id="no-expenses">Nessuna spesa registrata.</p>
@@ -315,8 +318,8 @@
                         type="number"
                         id="income-amount"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                        placeholder="Es. 5.000,00"
-                        step="0.01"
+                        placeholder="Es. 5.000"
+                        step="1"
                         required
                     />
                 </div>
@@ -352,12 +355,6 @@
                             <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
                                 Entrate (LKR)
                             </th>
-                            <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Spese (LKR)
-                            </th>
-                            <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
-                                Differenza (LKR)
-                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="income-summary-table-body">
@@ -366,7 +363,7 @@
                 </table>
             </div>
             <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-section-display">
-                Totale Entrate Registrate: <span id="total-income-section-value">0,00</span> LKR
+                Totale Entrate Registrate: <span id="total-income-section-value">0</span> LKR
             </div>
 
 
@@ -407,6 +404,56 @@
 
             <button
                 id="back-to-main-from-income"
+                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Torna alla schermata principale
+            </button>
+        </div>
+
+        <!-- Nuova sezione Vedi Spese Singole -->
+        <div id="view-single-participant-expenses-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-3xl mx-auto my-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Spese per Partecipante</h2>
+
+            <div class="mb-6">
+                <label for="single-participant-select" class="block text-sm font-medium text-gray-700 mb-1">Seleziona Partecipante:</label>
+                <select id="single-participant-select" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="">-- Seleziona un partecipante --</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Spese di <span id="selected-participant-name"></span></h3>
+            <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-single-participant-cost-display">
+                Totale Spese: <span id="total-single-participant-cost-value">0</span> LKR
+            </p>
+            <p class="text-center text-gray-600" id="loading-single-expenses">Caricamento spese...</p>
+            <p class="text-center text-gray-600 hidden" id="no-single-expenses">Nessuna spesa trovata per questo partecipante.</p>
+            <div class="overflow-x-auto rounded-lg shadow-md mb-6 hidden" id="single-participant-expenses-table-wrapper">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Data
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Costo Totale (LKR)
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Quota (LKR)
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Descrizione
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="single-participant-expenses-table-body">
+                        <!-- Righe delle spese -->
+                    </tbody>
+                </table>
+            </div>
+
+            <button
+                id="back-to-main-from-single-expenses"
                 class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
                 Torna alla schermata principale
@@ -472,6 +519,8 @@
         let currentPasswordCallback = null; // Callback per la conferma password
 
         let knownParticipants = []; // Lista globale dei partecipanti conosciuti
+        let allExpensesData = []; // Cache globale per tutte le spese
+        let allIncomesData = []; // Cache globale per tutte le entrate
 
         // Funzione per mostrare/nascondere le viste
         function showView(viewId) {
@@ -479,20 +528,31 @@
             document.getElementById('add-expense-form-container').classList.add('hidden');
             document.getElementById('view-expenses-list-container').classList.add('hidden');
             document.getElementById('income-management-container').classList.add('hidden');
+            document.getElementById('view-single-participant-expenses-container').classList.add('hidden'); // Nascondi la nuova vista
 
             document.getElementById(viewId).classList.remove('hidden');
 
             // Aggiorna le viste quando vengono mostrate
             if (viewId === 'view-expenses-list-container') {
+                // Questi saranno aggiornati tramite i listener onSnapshot, ma li chiamo per sicurezza
+                // se la vista viene attivata senza un cambiamento nei dati sottostanti
                 fetchAndDisplayExpenses();
-                calculateAndDisplaySummary(); // Calcola e mostra il riepilogo generale
+                calculateAndDisplaySummary();
             } else if (viewId === 'income-management-container') {
-                fetchKnownParticipants(); // Carica i partecipanti conosciuti (per il riepilogo interno)
-                fetchAndDisplayIncomes(); // Carica le entrate registrate
-                calculateAndDisplayParticipantSummaryInIncomeSection(); // Calcola e mostra il riepilogo dei partecipanti nella sezione entrate
-                resetIncomeForm(); // Resetta il form di aggiunta entrata
+                fetchKnownParticipants();
+                fetchAndDisplayIncomes();
+                calculateAndDisplayParticipantSummaryInIncomeSection();
+                resetIncomeForm();
             } else if (viewId === 'add-expense-form-container') {
-                renderExpenseParticipantsCheckboxes(); // Renderizza i checkbox dei partecipanti
+                renderExpenseParticipantsCheckboxes();
+            } else if (viewId === 'view-single-participant-expenses-container') {
+                populateSingleParticipantSelect(); // Popola il dropdown all'apertura
+                document.getElementById('single-participant-select').value = ""; // Resetta la selezione
+                document.getElementById('selected-participant-name').textContent = ""; // Pulisci il nome
+                document.getElementById('total-single-participant-cost-display').classList.add('hidden');
+                document.getElementById('single-participant-expenses-table-wrapper').classList.add('hidden');
+                document.getElementById('no-single-expenses').classList.add('hidden');
+                document.getElementById('loading-single-expenses').classList.add('hidden');
             }
         }
 
@@ -507,6 +567,37 @@
 
                 // Inizializza KNOWN_PARTICIPANTS_DOC_REF qui, dopo che 'db' è stato impostato
                 KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
+
+                // Setup listeners globali per i dati, così sono sempre aggiornati
+                onSnapshot(collection(db, `public_travel_expenses`), (snapshot) => {
+                    allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Trigger aggiornamenti per le viste attive
+                    if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                        fetchAndDisplayExpenses(); // Re-render table
+                        calculateAndDisplaySummary(); // Re-calculate summary
+                    }
+                    if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                        calculateAndDisplayParticipantSummaryInIncomeSection(); // Re-calculate income section summary
+                    }
+                    if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                        const selectedParticipant = document.getElementById('single-participant-select').value;
+                        if (selectedParticipant) {
+                            displaySingleParticipantExpenses(selectedParticipant);
+                        }
+                    }
+                });
+
+                onSnapshot(collection(db, `public_incomes`), (snapshot) => {
+                    allIncomesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Trigger aggiornamenti per le viste attive
+                    if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                        calculateAndDisplaySummary();
+                    }
+                    if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                        calculateAndDisplayParticipantSummaryInIncomeSection();
+                        fetchAndDisplayIncomes(); // Re-render incomes list
+                    }
+                });
 
 
                 onAuthStateChanged(auth, async (user) => {
@@ -535,6 +626,7 @@
                     document.getElementById('add-expense-btn').disabled = false;
                     document.getElementById('view-expenses-btn').disabled = false;
                     document.getElementById('add-income-btn').disabled = false;
+                    document.getElementById('view-single-participant-expenses-btn').disabled = false; // Abilita il nuovo pulsante
                     console.log("Pulsanti abilitati e messaggio di caricamento nascosto."); // Log di conferma
                     showView('main-screen'); // Mostra esplicitamente la schermata principale
                 });
@@ -548,6 +640,7 @@
                 document.getElementById('add-expense-btn').disabled = false;
                 document.getElementById('view-expenses-btn').disabled = false;
                 document.getElementById('add-income-btn').disabled = false;
+                document.getElementById('view-single-participant-expenses-btn').disabled = false; // Abilita il nuovo pulsante
                 console.log("Pulsanti abilitati in caso di errore di inizializzazione."); // Log di conferma
                 showView('main-screen'); // Mostra esplicitamente la schermata principale
             }
@@ -630,6 +723,10 @@
                 // Aggiorna il riepilogo nella sezione entrate se la vista è attiva
                 if (!document.getElementById('income-management-container').classList.contains('hidden')) {
                     calculateAndDisplayParticipantSummaryInIncomeSection();
+                }
+                // Aggiorna il dropdown delle spese singole
+                if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                    populateSingleParticipantSelect();
                 }
 
             }, (error) => {
@@ -792,7 +889,7 @@
             }
 
             const date = expenseDateInput.value;
-            const cost = parseFloat(expenseCostInput.value);
+            const cost = Math.ceil(parseFloat(expenseCostInput.value)); // Arrotonda per eccesso
             const description = expenseDescriptionInput.value.trim();
 
             if (!date || isNaN(cost) || cost <= 0 || !description) {
@@ -904,94 +1001,77 @@
             totalCostDisplayTop.classList.add('hidden');
             expensesTableBody.innerHTML = '';
 
-            const expensesCollectionRef = collection(db, `public_travel_expenses`);
-            const q = query(expensesCollectionRef);
+            // Usa allExpensesData che è già aggiornato dal listener onSnapshot
+            let expensesToDisplay = [...allExpensesData]; // Crea una copia per l'ordinamento
 
-            onSnapshot(q, (snapshot) => {
-                let fetchedExpenses = [];
-                snapshot.forEach(doc => {
-                    fetchedExpenses.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
+            expensesToDisplay.sort((a, b) => {
+                const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+                const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toDate() : new Date(b.timestamp);
+                return dateB.getTime() - dateA.getTime();
+            });
 
-                fetchedExpenses.sort((a, b) => {
-                    const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
-                    const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toDate() : new Date(b.timestamp);
-                    return dateB.getTime() - dateA.getTime();
-                });
+            expensesTableBody.innerHTML = '';
+            let totalOverallCost = 0;
 
-                expensesTableBody.innerHTML = '';
-                let totalOverallCost = 0;
+            if (expensesToDisplay.length === 0) {
+                noExpenses.classList.remove('hidden');
+                expensesTableWrapper.classList.add('hidden');
+                totalCostDisplayTop.classList.add('hidden');
+            } else {
+                noExpenses.classList.add('hidden');
+                expensesTableWrapper.classList.remove('hidden');
+                totalCostDisplayTop.classList.remove('hidden');
 
-                if (fetchedExpenses.length === 0) {
-                    noExpenses.classList.remove('hidden');
-                    expensesTableWrapper.classList.add('hidden');
-                    totalCostDisplayTop.classList.add('hidden');
-                } else {
-                    noExpenses.classList.add('hidden');
-                    expensesTableWrapper.classList.remove('hidden');
-                    totalCostDisplayTop.classList.remove('hidden');
+                expensesToDisplay.forEach(expense => {
+                    const row = expensesTableBody.insertRow();
+                    const dateCell = row.insertCell();
+                    const costCell = row.insertCell();
+                    const descriptionCell = row.insertCell();
+                    const participantsCell = row.insertCell(); // Nuova cella per i partecipanti
+                    const actionCell = row.insertCell();
 
-                    fetchedExpenses.forEach(expense => {
-                        const row = expensesTableBody.insertRow();
-                        const dateCell = row.insertCell();
-                        const costCell = row.insertCell();
-                        const descriptionCell = row.insertCell();
-                        const participantsCell = row.insertCell(); // Nuova cella per i partecipanti
-                        const actionCell = row.insertCell();
-
-                        const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
-                        const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
+                    const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
+                    const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
                                                 ? expense.includedParticipants.join(', ')
                                                 : 'Nessuno'; // Cambiato da 'N/A' a 'Nessuno'
 
-                        // Tronca la lista dei partecipanti per la visualizzazione
-                        const maxChars = 25;
-                        const truncatedParticipantsList = participantsList.length > maxChars
+                    // Tronca la lista dei partecipanti per la visualizzazione
+                    const maxChars = 25;
+                    const truncatedParticipantsList = participantsList.length > maxChars
                             ? participantsList.substring(0, maxChars - 3) + '...'
                             : participantsList;
 
-                        dateCell.textContent = displayDate;
-                        costCell.textContent = expense.cost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        descriptionCell.textContent = expense.description;
-                        participantsCell.textContent = truncatedParticipantsList;
+                    dateCell.textContent = displayDate;
+                    costCell.textContent = Math.ceil(expense.cost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                    descriptionCell.textContent = expense.description;
+                    participantsCell.textContent = truncatedParticipantsList;
 
-                        // Aggiungi evento click per il pop-up se la lista è stata troncata
-                        if (participantsList.length > maxChars) {
-                            participantsCell.classList.add('cursor-pointer', 'underline'); // Aggiungi stile per indicare che è cliccabile
-                            participantsCell.title = 'Clicca per vedere tutti i partecipanti';
-                            participantsCell.addEventListener('click', () => {
-                                alert(`Partecipanti: ${participantsList}`);
-                            });
-                        }
+                    // Aggiungi evento click per il pop-up se la lista è stata troncata
+                    if (participantsList.length > maxChars) {
+                        participantsCell.classList.add('cursor-pointer', 'underline'); // Aggiungi stile per indicare che è cliccabile
+                        participantsCell.title = 'Clicca per vedere tutti i partecipanti';
+                        participantsCell.addEventListener('click', () => {
+                            alert(`Partecipanti: ${participantsList}`);
+                        });
+                    }
 
-                        const deleteIcon = document.createElement('i');
-                        deleteIcon.className = 'fas fa-trash-alt delete-icon';
-                        deleteIcon.title = 'Cancella spesa';
-                        deleteIcon.addEventListener('click', () => handleDeleteExpense(expense.id));
-                        actionCell.appendChild(deleteIcon);
+                    const deleteIcon = document.createElement('i');
+                    deleteIcon.className = 'fas fa-trash-alt delete-icon';
+                    deleteIcon.title = 'Cancella spesa';
+                    deleteIcon.addEventListener('click', () => handleDeleteExpense(expense.id));
+                    actionCell.appendChild(deleteIcon);
 
-                        dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
-                        costCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
-                        descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
-                        participantsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
-                        actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
+                    dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
+                    costCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                    descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                    participantsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                    actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
 
-                        totalOverallCost += expense.cost;
-                    });
-                    totalCostValueTop.textContent = totalOverallCost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                }
-                loadingExpenses.classList.add('hidden');
-            }, (error) => {
-                console.error("Errore nel recupero delle spese:", error);
-                loadingExpenses.textContent = 'Errore nel caricamento delle spese.';
-                loadingExpenses.classList.remove('hidden');
-                noExpenses.classList.add('hidden');
-                expensesTableWrapper.classList.add('hidden');
-                totalCostDisplayTop.classList.add('hidden');
-            });
+                    totalOverallCost += expense.cost;
+                });
+                totalCostValueTop.textContent = Math.ceil(totalOverallCost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+            }
+            loadingExpenses.classList.add('hidden');
         }
 
         // --- Gestione Entrate ---
@@ -1039,7 +1119,7 @@
             }
 
             const name = incomeParticipantNameInput.value.trim();
-            const amount = parseFloat(incomeAmountInput.value);
+            const amount = Math.ceil(parseFloat(incomeAmountInput.value)); // Arrotonda per eccesso
             const description = incomeDescriptionInput.value.trim();
 
             if (!name || isNaN(amount) || amount <= 0) {
@@ -1160,7 +1240,7 @@
                         const displayDate = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
 
                         // Per le entrate singole, il "totale" è l'importo versato + nome partecipante
-                        totalCell.textContent = `${income.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LKR (${income.participantName})`;
+                        totalCell.textContent = `${Math.ceil(income.amount).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} LKR (${income.participantName})`; // Arrotonda e formatta
                         descriptionCell.textContent = income.description;
                         dateCell.textContent = displayDate;
 
@@ -1216,16 +1296,10 @@
 
             try {
                 // 1. Recupera tutti i dati necessari
-                const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
-                const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
+                // Usa allExpensesData e allIncomesData che sono già aggiornati dai listener onSnapshot
+                const allExpenses = [...allExpensesData];
+                const allIncomes = [...allIncomesData];
                 const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
-
-                const allExpenses = [];
-                expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
-
-                const allIncomes = [];
-                incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
-
                 const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
 
                 // 2. Inizializza il riepilogo per ogni partecipante conosciuto
@@ -1292,9 +1366,9 @@
                     const balanceCell = row.insertCell();
 
                     nameCell.textContent = name;
-                    incomeCell.textContent = data.income.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    expenseCell.textContent = data.expense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    balanceCell.textContent = data.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    incomeCell.textContent = Math.ceil(data.income).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                    expenseCell.textContent = Math.ceil(data.expense).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                    balanceCell.textContent = Math.ceil(data.balance).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
 
                     balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
                     balanceCell.classList.add('font-semibold');
@@ -1309,7 +1383,7 @@
                 if (hasSummaryData) {
                     summaryTableWrapper.classList.remove('hidden');
                     totalIncomeSummaryDisplay.classList.remove('hidden');
-                    totalIncomeSummaryValue.textContent = totalOverallIncome.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    totalIncomeSummaryValue.textContent = Math.ceil(totalOverallIncome).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
                     noSummaryData.classList.add('hidden');
                 } else {
                     summaryTableWrapper.classList.add('hidden');
@@ -1321,7 +1395,7 @@
 
                 // Visualizza la differenza totale finale
                 overallDifferenceSection.classList.remove('hidden');
-                overallBalanceValue.textContent = finalOverallDifference.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                overallBalanceValue.textContent = Math.ceil(finalOverallDifference).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
                 overallDifferenceSection.classList.remove('bg-blue-50', 'bg-red-50', 'bg-green-50'); // Rimuovi classi precedenti
                 
                 // Rimuovi classi di testo precedenti
@@ -1371,15 +1445,10 @@
 
             try {
                 // 1. Recupera tutti i dati necessari
-                const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
-                const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
+                // Usa allExpensesData e allIncomesData che sono già aggiornati dai listener onSnapshot
+                const allExpenses = [...allExpensesData];
+                const allIncomes = [...allIncomesData];
                 const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
-
-                const allExpenses = [];
-                expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
-
-                const allIncomes = [];
-                incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
 
                 const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
 
@@ -1421,33 +1490,36 @@
                 sortedParticipantNames.forEach(name => {
                     hasSummaryData = true;
                     const data = participantSummary[name];
-                    data.balance = data.income - data.expense;
+                    // data.balance = data.income - data.expense; // Non calcoliamo la differenza qui, solo entrate
 
                     const row = incomeSummaryTableBody.insertRow();
                     const nameCell = row.insertCell();
                     const incomeCell = row.insertCell();
-                    const expenseCell = row.insertCell();
-                    const balanceCell = row.insertCell();
+                    // Rimosse le celle per Spese e Differenza, come da richiesta
+                    // const expenseCell = row.insertCell();
+                    // const balanceCell = row.insertCell();
 
                     nameCell.textContent = name;
-                    incomeCell.textContent = data.income.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    expenseCell.textContent = data.expense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    balanceCell.textContent = data.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    incomeCell.textContent = Math.ceil(data.income).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
+                    // expenseCell.textContent = '0'; // Non mostriamo le spese qui
+                    // balanceCell.textContent = '0'; // Non mostriamo la differenza qui
 
-                    balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
-                    balanceCell.classList.add('font-semibold');
+                    // Rimuovi classi di colore e grassetto per Entrate/Spese/Differenza
+                    incomeCell.classList.remove('summary-positive', 'summary-negative', 'font-semibold');
+                    // expenseCell.classList.remove('summary-positive', 'summary-negative', 'font-semibold');
+                    // balanceCell.classList.remove('summary-positive', 'summary-negative', 'font-semibold');
 
                     nameCell.className = "px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900";
                     incomeCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
-                    expenseCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
-                    balanceCell.className = "px-3 py-2 whitespace-nowrap text-sm text-right";
+                    // expenseCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
+                    // balanceCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
                 });
 
 
                 if (hasSummaryData) {
                     incomeSummaryTableWrapper.classList.remove('hidden');
                     totalIncomeSectionDisplay.classList.remove('hidden');
-                    totalIncomeSectionValue.textContent = totalOverallIncome.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    totalIncomeSectionValue.textContent = Math.ceil(totalOverallIncome).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }); // Arrotonda e formatta
                     noIncomeSummaryData.classList.add('hidden');
                 } else {
                     incomeSummaryTableWrapper.classList.add('hidden');
@@ -1504,6 +1576,99 @@
             );
         });
 
+        // --- Funzione Vedi Spese Singole ---
+        const viewSingleParticipantExpensesBtn = document.getElementById('view-single-participant-expenses-btn');
+        const singleParticipantSelect = document.getElementById('single-participant-select');
+        const selectedParticipantNameSpan = document.getElementById('selected-participant-name');
+        const totalSingleParticipantCostDisplay = document.getElementById('total-single-participant-cost-display');
+        const totalSingleParticipantCostValue = document.getElementById('total-single-participant-cost-value');
+        const singleParticipantExpensesTableBody = document.getElementById('single-participant-expenses-table-body');
+        const loadingSingleExpenses = document.getElementById('loading-single-expenses');
+        const noSingleExpenses = document.getElementById('no-single-expenses');
+        const singleParticipantExpensesTableWrapper = document.getElementById('single-participant-expenses-table-wrapper');
+
+        viewSingleParticipantExpensesBtn.addEventListener('click', () => {
+            showView('view-single-participant-expenses-container');
+        });
+
+        singleParticipantSelect.addEventListener('change', (e) => {
+            const selectedName = e.target.value;
+            if (selectedName) {
+                displaySingleParticipantExpenses(selectedName);
+            } else {
+                // Se non è selezionato nessun partecipante, pulisci la tabella
+                selectedParticipantNameSpan.textContent = "";
+                totalSingleParticipantCostDisplay.classList.add('hidden');
+                singleParticipantExpensesTableWrapper.classList.add('hidden');
+                noSingleExpenses.classList.add('hidden');
+                loadingSingleExpenses.classList.add('hidden');
+                singleParticipantExpensesTableBody.innerHTML = '';
+            }
+        });
+
+        function populateSingleParticipantSelect() {
+            singleParticipantSelect.innerHTML = '<option value="">-- Seleziona un partecipante --</option>';
+            if (knownParticipants.length > 0) {
+                knownParticipants.sort().forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    singleParticipantSelect.appendChild(option);
+                });
+            }
+        }
+
+        function displaySingleParticipantExpenses(participantName) {
+            selectedParticipantNameSpan.textContent = participantName;
+            loadingSingleExpenses.classList.remove('hidden');
+            noSingleExpenses.classList.add('hidden');
+            singleParticipantExpensesTableWrapper.classList.add('hidden');
+            totalSingleParticipantCostDisplay.classList.add('hidden');
+            singleParticipantExpensesTableBody.innerHTML = '';
+
+            const filteredExpenses = allExpensesData.filter(expense =>
+                expense.includedParticipants && expense.includedParticipants.includes(participantName)
+            );
+
+            filteredExpenses.sort((a, b) => {
+                const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+                const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toDate() : new Date(b.timestamp);
+                return dateB.getTime() - dateA.getTime();
+            });
+
+            let totalParticipantExpense = 0;
+
+            if (filteredExpenses.length === 0) {
+                noSingleExpenses.classList.remove('hidden');
+            } else {
+                singleParticipantExpensesTableWrapper.classList.remove('hidden');
+                totalSingleParticipantCostDisplay.classList.remove('hidden');
+                filteredExpenses.forEach(expense => {
+                    const row = singleParticipantExpensesTableBody.insertRow();
+                    const dateCell = row.insertCell();
+                    const totalCostCell = row.insertCell();
+                    const quotaCell = row.insertCell();
+                    const descriptionCell = row.insertCell();
+
+                    const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
+                    const quota = expense.includedParticipants.length > 0 ? expense.cost / expense.includedParticipants.length : 0;
+                    totalParticipantExpense += quota;
+
+                    dateCell.textContent = displayDate;
+                    totalCostCell.textContent = Math.ceil(expense.cost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    quotaCell.textContent = Math.ceil(quota).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    descriptionCell.textContent = expense.description;
+
+                    dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
+                    totalCostCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                    quotaCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                    descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                });
+                totalSingleParticipantCostValue.textContent = Math.ceil(totalParticipantExpense).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            }
+            loadingSingleExpenses.classList.add('hidden');
+        }
+
 
         // --- Pulsanti per tornare alla schermata principale ---
         document.getElementById('back-to-main-from-add').addEventListener('click', () => {
@@ -1515,6 +1680,10 @@
         });
 
         document.getElementById('back-to-main-from-income').addEventListener('click', () => {
+            showView('main-screen');
+        });
+
+        document.getElementById('back-to-main-from-single-expenses').addEventListener('click', () => {
             showView('main-screen');
         });
 
