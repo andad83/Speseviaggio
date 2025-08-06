@@ -669,52 +669,71 @@
                 // Inizializza KNOWN_PARTICIPANTS_DOC_REF qui, dopo che 'db' è stato impostato
                 KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
 
-                // --- Fetch initial knownParticipants synchronously ---
-                // This ensures knownParticipants is populated before other UI elements depend on it
-                const docSnapshot = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
-                if (docSnapshot.exists()) {
-                    knownParticipants = docSnapshot.data().names || [];
-                } else {
-                    knownParticipants = [];
-                }
-                console.log("Initial knownParticipants loaded:", knownParticipants);
-                // --- End initial fetch ---
-
-                // Setup global onSnapshot listeners (these will handle subsequent changes)
-                onSnapshot(collection(db, `public_travel_expenses`), (snapshot) => {
-                    allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Trigger aggiornamenti per le viste attive
-                    if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
-                        fetchAndDisplayExpenses(); // Re-render table
-                        calculateAndDisplaySummary(); // Re-calculate summary
-                    }
-                    if (!document.getElementById('income-management-container').classList.contains('hidden')) {
-                        calculateAndDisplayParticipantSummaryInIncomeSection(); // Re-calculate income section summary
-                    }
-                    if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
-                        const selectedParticipant = document.getElementById('single-participant-select').value;
-                        if (selectedParticipant) {
-                            displaySingleParticipantExpenses(selectedParticipant);
+                // Promises per assicurare che i dati iniziali siano caricati
+                const expensesLoadedPromise = new Promise(resolve => {
+                    onSnapshot(collection(db, `public_travel_expenses`), (snapshot) => {
+                        allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        // Trigger aggiornamenti per le viste attive
+                        if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                            fetchAndDisplayExpenses();
+                            calculateAndDisplaySummary();
                         }
-                    }
+                        if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                            calculateAndDisplayParticipantSummaryInIncomeSection();
+                        }
+                        if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                            const selectedParticipant = document.getElementById('single-participant-select').value;
+                            if (selectedParticipant) {
+                                displaySingleParticipantExpenses(selectedParticipant);
+                            }
+                        }
+                        resolve(); // Risolvi la promise dopo il primo snapshot
+                    });
                 });
 
-                onSnapshot(collection(db, `public_incomes`), (snapshot) => {
-                    allIncomesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    // Trigger aggiornamenti per le viste attive
-                    if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
-                        calculateAndDisplaySummary();
-                    }
-                    if (!document.getElementById('income-management-container').classList.contains('hidden')) {
-                        calculateAndDisplayParticipantSummaryInIncomeSection();
-                        fetchAndDisplayIncomes(); // Re-render incomes list
-                    }
-                    if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
-                        const selectedParticipant = document.getElementById('single-participant-select').value;
-                        if (selectedParticipant) {
-                            displaySingleParticipantExpenses(selectedParticipant);
+                const incomesLoadedPromise = new Promise(resolve => {
+                    onSnapshot(collection(db, `public_incomes`), (snapshot) => {
+                        allIncomesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        // Trigger aggiornamenti per le viste attive
+                        if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                            calculateAndDisplaySummary();
                         }
-                    }
+                        if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                            calculateAndDisplayParticipantSummaryInIncomeSection();
+                            fetchAndDisplayIncomes();
+                        }
+                        if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                            const selectedParticipant = document.getElementById('single-participant-select').value;
+                            if (selectedParticipant) {
+                                displaySingleParticipantExpenses(selectedParticipant);
+                            }
+                        }
+                        resolve(); // Risolvi la promise dopo il primo snapshot
+                    });
+                });
+
+                const participantsLoadedPromise = new Promise(resolve => {
+                    onSnapshot(KNOWN_PARTICIPANTS_DOC_REF, (docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            knownParticipants = docSnapshot.data().names || [];
+                        } else {
+                            knownParticipants = [];
+                        }
+                        // Trigger aggiornamenti per le viste attive
+                        if (!document.getElementById('add-expense-form-container').classList.contains('hidden')) {
+                            renderExpenseParticipantsCheckboxes();
+                        }
+                        if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
+                            calculateAndDisplaySummary();
+                        }
+                        if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                            calculateAndDisplayParticipantSummaryInIncomeSection();
+                        }
+                        if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                            populateSingleParticipantSelect();
+                        }
+                        resolve(); // Risolvi la promise dopo il primo snapshot
+                    });
                 });
 
 
@@ -739,7 +758,10 @@
                             console.log("Autenticazione completata (o fallback), User ID:", currentUserId);
                         }
                     }
-                    // Abilita i pulsanti e nascondi il messaggio di caricamento una volta che Firebase è pronto
+                    
+                    // Aspetta che tutti i dati iniziali siano caricati prima di abilitare i pulsanti
+                    await Promise.all([expensesLoadedPromise, incomesLoadedPromise, participantsLoadedPromise]);
+
                     document.getElementById('initial-loading-message').classList.add('hidden');
                     document.getElementById('add-expense-btn').disabled = false;
                     document.getElementById('view-expenses-btn').disabled = false;
