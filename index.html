@@ -13,13 +13,34 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f3f4f6; /* Colore di fallback */
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 1rem;
+            /* Immagine di sfondo per l'intero body */
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sri_Lanka_map_with_provinces.svg/1200px-Sri_Lanka_map_with_provinces.svg.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Rende lo sfondo fisso allo scroll */
+            position: relative; /* Necessario per il pseudo-elemento ::before */
+            z-index: 0; /* Assicura che il body sia alla base */
         }
+
+        /* Overlay e effetto sfocato per l'immagine di sfondo */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8); /* Overlay bianco semi-trasparente */
+            filter: blur(2px); /* Applica la sfocatura al pseudo-elemento */
+            z-index: -1; /* Posizionalo dietro il contenuto principale ma sopra l'immagine di sfondo del body */
+        }
+
         /* Stili per il modale */
         .modal-overlay {
             position: fixed;
@@ -82,30 +103,11 @@
         .summary-negative {
             color: #dc2626; /* red-600 */
         }
-        /* Stile per lo sfondo della mappa */
+        /* Stile per la schermata principale, ora con background chiaro e z-index */
         #main-screen {
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sri_Lanka_map_with_provinces.svg/1200px-Sri_Lanka_map_with_provinces.svg.png');
-            background-size: cover;
-            background-position: center;
-            filter: blur(2px); /* Applica un leggero effetto sfocato */
-            transform: scale(1.02); /* Compensare la sfocatura per evitare bordi bianchi */
-            position: relative; /* Necessario per z-index */
-            z-index: 1; /* Assicurati che il contenuto sia sopra lo sfondo */
-            overflow: hidden; /* Nasconde eventuali bordi sfocati che escono */
-        }
-        #main-screen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.8); /* Overlay bianco semi-trasparente */
-            z-index: 2; /* Sopra l'immagine, sotto il contenuto */
-        }
-        #main-screen > *:not(style):not(script) { /* Assicurati che il contenuto sia sopra l'overlay */
-            position: relative;
-            z-index: 3;
+            background-color: rgba(255, 255, 255, 0.9); /* Sfondo chiaro per il contenuto */
+            position: relative; /* Assicura che il contenuto sia sopra l'overlay del body */
+            z-index: 3; /* Più alto del body::before */
         }
     </style>
 </head>
@@ -119,14 +121,14 @@
                 Caricamento applicazione...
             </p>
             <div class="space-y-4">
+                <button id="add-income-btn" class="w-full py-3 px-6 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Gestisci Entrate <i class="fas fa-lock ml-2"></i>
+                </button>
                 <button id="add-expense-btn" class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
                     Inserisci Nuova Spesa <i class="fas fa-lock ml-2"></i>
                 </button>
                 <button id="view-expenses-btn" class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
                     Vedi Totale Spese
-                </button>
-                <button id="add-income-btn" class="w-full py-3 px-6 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
-                    Gestisci Entrate <i class="fas fa-lock ml-2"></i>
                 </button>
             </div>
             <p id="user-id-display" class="mt-8 text-xs text-gray-500 hidden">
@@ -241,6 +243,14 @@
                 <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-summary-display">
                     Totale Entrate Registrate: <span id="total-income-summary-value">0,00</span> LKR
                 </div>
+            </div>
+
+            <!-- Nuova sezione: Differenza Totale Entrate e Spese -->
+            <div id="overall-difference-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white hidden">
+                <h3 class="text-xl font-bold text-center mb-2">Differenza Totale</h3>
+                <p class="text-center text-2xl font-extrabold">
+                    <span id="overall-balance-value">0,00</span> LKR
+                </p>
             </div>
 
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Dettaglio Spese</h2>
@@ -848,6 +858,11 @@
         const noExpenses = document.getElementById('no-expenses');
         const expensesTableWrapper = document.getElementById('expenses-table-wrapper');
 
+        // Nuovo elemento per la differenza totale
+        const overallDifferenceSection = document.getElementById('overall-difference-section');
+        const overallBalanceValue = document.getElementById('overall-balance-value');
+
+
         document.getElementById('view-expenses-btn').addEventListener('click', () => {
             showView('view-expenses-list-container');
         });
@@ -1028,7 +1043,7 @@
             const description = incomeDescriptionInput.value.trim();
 
             if (!name || isNaN(amount) || amount <= 0) {
-                incomeMessage.textContent = 'Per favore, inserisci un nome e un importo valido per il partecipante.';
+                incomeMessage.textContent = 'Per favorere, inserisci un nome e un importo valido per il partecipante.';
                 incomeMessage.className = 'message error';
                 return;
             }
@@ -1188,6 +1203,7 @@
                 noSummaryData.classList.add('hidden');
                 summaryTableWrapper.classList.add('hidden');
                 totalIncomeSummaryDisplay.classList.add('hidden');
+                overallDifferenceSection.classList.add('hidden'); // Nascondi anche questa sezione
                 return;
             }
 
@@ -1195,6 +1211,7 @@
             noSummaryData.classList.add('hidden');
             summaryTableWrapper.classList.add('hidden');
             totalIncomeSummaryDisplay.classList.add('hidden');
+            overallDifferenceSection.classList.add('hidden'); // Nascondi all'inizio del calcolo
             summaryTableBody.innerHTML = '';
 
             try {
@@ -1218,6 +1235,7 @@
                 });
 
                 let totalOverallIncome = 0;
+                let totalOverallExpenses = 0; // Nuovo: per la somma totale delle spese
 
                 // 3. Calcola le entrate per ogni partecipante
                 allIncomes.forEach(income => {
@@ -1233,6 +1251,8 @@
 
                 // 4. Calcola le spese per ogni partecipante
                 allExpenses.forEach(expense => {
+                    totalOverallExpenses += expense.cost; // Aggiungi al totale generale delle spese
+
                     const includedForThisExpense = expense.includedParticipants && Array.isArray(expense.includedParticipants) && expense.includedParticipants.length > 0
                         ? expense.includedParticipants
                         : currentKnownParticipants; // Se non specificato, tutti i partecipanti conosciuti
@@ -1250,6 +1270,9 @@
                         });
                     }
                 });
+
+                // Calcola la differenza totale finale
+                const finalOverallDifference = totalOverallIncome - totalOverallExpenses;
 
                 // 5. Calcola la differenza e renderizza la tabella di riepilogo
                 summaryTableBody.innerHTML = '';
@@ -1296,6 +1319,19 @@
 
                 loadingSummary.classList.add('hidden');
 
+                // Visualizza la differenza totale finale
+                overallDifferenceSection.classList.remove('hidden');
+                overallBalanceValue.textContent = finalOverallDifference.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                overallDifferenceSection.classList.remove('bg-blue-50', 'bg-red-50', 'bg-green-50'); // Rimuovi classi precedenti
+                if (finalOverallDifference > 0) {
+                    overallDifferenceSection.classList.add('bg-green-50');
+                } else if (finalOverallDifference < 0) {
+                    overallDifferenceSection.classList.add('bg-red-50');
+                } else {
+                    overallDifferenceSection.classList.add('bg-blue-50'); // Neutro se zero
+                }
+
+
             } catch (error) {
                 console.error("Errore nel calcolo o visualizzazione del riepilogo generale:", error);
                 loadingSummary.textContent = 'Errore nel calcolo del riepilogo.';
@@ -1303,6 +1339,7 @@
                 noSummaryData.classList.remove('hidden');
                 summaryTableWrapper.classList.add('hidden');
                 totalIncomeSummaryDisplay.classList.add('hidden');
+                overallDifferenceSection.classList.add('hidden');
             }
         }
 
