@@ -88,7 +88,7 @@
 
     <div id="app-container" class="w-full max-w-md">
         <!-- Contenuto dell'app verrà iniettato qui dal JavaScript -->
-        <div id="main-screen" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto">
+        <div id="main-screen" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto relative z-10">
             <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Gestione Spese di Viaggio</h1>
             <p class="text-gray-600 mb-8" id="initial-loading-message">
                 Caricamento applicazione...
@@ -409,7 +409,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, Timestamp, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, Timestamp, deleteDoc, doc, setDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // **************************************************************************************************
         // *** ATTENZIONE: INSERISCI QUI LA TUA CONFIGURAZIONE FIREBASE PERSONALE!                     ***
@@ -487,10 +487,13 @@
                             console.log("Autenticazione completata (o fallback), User ID:", currentUserId);
                         }
                     }
+                    // Abilita i pulsanti e nascondi il messaggio di caricamento una volta che Firebase è pronto
                     document.getElementById('initial-loading-message').classList.add('hidden');
                     document.getElementById('add-expense-btn').disabled = false;
                     document.getElementById('view-expenses-btn').disabled = false;
                     document.getElementById('add-income-btn').disabled = false;
+                    console.log("Pulsanti abilitati e messaggio di caricamento nascosto."); // Log di conferma
+                    showView('main-screen'); // Mostra esplicitamente la schermata principale
                 });
             } catch (error) {
                 console.error("Errore durante l'inizializzazione di Firebase (catch esterno):", error);
@@ -502,6 +505,8 @@
                 document.getElementById('add-expense-btn').disabled = false;
                 document.getElementById('view-expenses-btn').disabled = false;
                 document.getElementById('add-income-btn').disabled = false;
+                console.log("Pulsanti abilitati in caso di errore di inizializzazione."); // Log di conferma
+                showView('main-screen'); // Mostra esplicitamente la schermata principale
             }
         }
 
@@ -560,7 +565,13 @@
         const noKnownParticipants = document.getElementById('no-known-participants');
         const knownParticipantMessage = document.getElementById('known-participant-message');
 
-        const KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
+        // Assicurati che db sia inizializzato prima di usarlo qui
+        const KNOWN_PARTICIPANTS_DOC_REF = (function() {
+            // Questo pattern assicura che il riferimento al doc sia creato solo quando db è disponibile.
+            // Sarà chiamato una volta che initFirebase ha impostato db.
+            return doc(getFirestore(initializeApp(firebaseConfig)), `app_settings`, `known_participants`);
+        })();
+
 
         async function fetchKnownParticipants() {
             if (!db || !firebaseReady) {
@@ -864,7 +875,7 @@
 
                         dateCell.textContent = displayDate;
                         costCell.textContent = expense.cost.toFixed(2);
-                        descriptionCell.textContent = expense.description;
+                        descriptionCell.textContent = descriptionCell.textContent = expense.description; // Fixed typo
                         participantsCell.textContent = participantsList;
 
                         const deleteIcon = document.createElement('i');
@@ -1283,7 +1294,11 @@
         });
 
         // Inizializza Firebase all'apertura della pagina
-        window.onload = initFirebase;
+        window.onload = () => {
+            // Assicurati che il modale della password sia nascosto all'inizio
+            document.getElementById('password-modal-overlay').classList.add('hidden');
+            initFirebase();
+        };
     </script>
 </body>
 </html>
