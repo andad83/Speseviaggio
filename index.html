@@ -89,6 +89,16 @@
         .delete-icon:hover {
             color: #dc2626; /* red-600 */
         }
+        .edit-icon {
+            color: #2563eb; /* blue-600 */
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.2s ease-in-out;
+            margin-right: 0.5rem; /* Spazio tra edit e delete */
+        }
+        .edit-icon:hover {
+            color: #1d4ed8; /* blue-700 */
+        }
         .participant-checkbox-item {
             display: flex;
             align-items: center;
@@ -108,6 +118,16 @@
             background-color: rgba(255, 255, 255, 0.9); /* Sfondo chiaro per il contenuto */
             position: relative; /* Assicura che il contenuto sia sopra l'overlay del body */
             z-index: 3; /* Più alto del body::before */
+        }
+        /* Stili per il testo della differenza totale */
+        .overall-balance-text-positive {
+            color: #047857; /* green-800 */
+        }
+        .overall-balance-text-negative {
+            color: #b91c1c; /* red-800 */
+        }
+        .overall-balance-text-zero {
+            color: #000000; /* black */
         }
     </style>
 </head>
@@ -140,8 +160,9 @@
         </div>
 
         <div id="add-expense-form-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-md mx-auto my-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Aggiungi Nuova Spesa</h2>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center" id="expense-form-title">Aggiungi Nuova Spesa</h2>
             <form id="expense-form" class="space-y-4">
+                <input type="hidden" id="expense-id-to-edit" value="">
                 <div>
                     <label for="expense-date" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
                     <input
@@ -289,8 +310,14 @@
                 </table>
             </div>
             <button
+                id="export-data-btn"
+                class="w-full py-3 px-6 bg-yellow-600 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105 mt-6"
+            >
+                Esporta Dati (CSV)
+            </button>
+            <button
                 id="back-to-main-from-view"
-                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                class="mt-3 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
                 Torna alla schermata principale
             </button>
@@ -422,7 +449,21 @@
                 </select>
             </div>
 
-            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Spese di <span id="selected-participant-name"></span></h3>
+            <!-- Riepilogo per il singolo partecipante -->
+            <div id="single-participant-summary-section" class="mb-8 border border-gray-200 rounded-lg p-4 text-white hidden">
+                <h3 class="text-xl font-bold text-center mb-2 text-gray-800">Riepilogo per <span id="single-participant-summary-name"></span></h3>
+                <p class="text-center text-lg text-gray-800">
+                    Entrate: <span id="single-participant-income-value" class="font-bold">0</span> LKR
+                </p>
+                <p class="text-center text-lg text-gray-800">
+                    Spese: <span id="single-participant-expense-value" class="font-bold">0</span> LKR
+                </p>
+                <p class="text-center text-2xl">
+                    Differenza: <span id="single-participant-balance-value" class="font-bold">0</span> LKR
+                </p>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Dettaglio Spese di <span id="selected-participant-name"></span></h3>
             <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-single-participant-cost-display">
                 Totale Spese: <span id="total-single-participant-cost-value">0</span> LKR
             </p>
@@ -490,6 +531,23 @@
         </div>
     </div>
 
+    <!-- Modale Dettagli Personalizzato -->
+    <div id="custom-details-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold text-gray-900 mb-4" id="custom-details-modal-title">Dettagli</h3>
+            <div id="custom-details-modal-content" class="text-gray-700 text-sm mb-4 whitespace-pre-wrap"></div>
+            <div class="mt-6 flex justify-end">
+                <button
+                    id="close-custom-details-modal-btn"
+                    class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Chiudi
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -553,6 +611,8 @@
                 document.getElementById('single-participant-expenses-table-wrapper').classList.add('hidden');
                 document.getElementById('no-single-expenses').classList.add('hidden');
                 document.getElementById('loading-single-expenses').classList.add('hidden');
+                // Nascondi il riepilogo del singolo partecipante all'inizio
+                document.getElementById('single-participant-summary-section').classList.add('hidden');
             }
         }
 
@@ -596,6 +656,12 @@
                     if (!document.getElementById('income-management-container').classList.contains('hidden')) {
                         calculateAndDisplayParticipantSummaryInIncomeSection();
                         fetchAndDisplayIncomes(); // Re-render incomes list
+                    }
+                    if (!document.getElementById('view-single-participant-expenses-container').classList.contains('hidden')) {
+                        const selectedParticipant = document.getElementById('single-participant-select').value;
+                        if (selectedParticipant) {
+                            displaySingleParticipantExpenses(selectedParticipant);
+                        }
                     }
                 });
 
@@ -693,6 +759,23 @@
             }
         });
 
+        // --- Gestione Modale Dettagli Personalizzato (per sostituire alert) ---
+        const customDetailsModalOverlay = document.getElementById('custom-details-modal-overlay');
+        const customDetailsModalTitle = document.getElementById('custom-details-modal-title');
+        const customDetailsModalContent = document.getElementById('custom-details-modal-content');
+        const closeCustomDetailsModalBtn = document.getElementById('close-custom-details-modal-btn');
+
+        function openCustomDetailsModal(title, content) {
+            customDetailsModalTitle.textContent = title;
+            customDetailsModalContent.textContent = content;
+            customDetailsModalOverlay.classList.remove('hidden');
+        }
+
+        closeCustomDetailsModalBtn.addEventListener('click', () => {
+            customDetailsModalOverlay.classList.add('hidden');
+        });
+
+
         // --- Gestione Partecipanti Conosciuti (Master List gestita implicitamente) ---
         // Riferimento al documento che memorizza i nomi dei partecipanti conosciuti
         let KNOWN_PARTICIPANTS_DOC_REF; // Dichiarata qui, inizializzata in initFirebase
@@ -755,8 +838,10 @@
         }
 
 
-        // --- Gestione Aggiungi Spesa ---
+        // --- Gestione Aggiungi/Modifica Spesa ---
         const expenseForm = document.getElementById('expense-form');
+        const expenseFormTitle = document.getElementById('expense-form-title');
+        const expenseIdToEdit = document.getElementById('expense-id-to-edit');
         const expenseDateInput = document.getElementById('expense-date');
         const expenseCostInput = document.getElementById('expense-cost');
         const expenseDescriptionInput = document.getElementById('expense-description');
@@ -767,17 +852,16 @@
         const individualParticipantsSelectionDiv = document.getElementById('individual-participants-selection');
         const loadingExpenseParticipants = document.getElementById('loading-expense-participants');
         const noExpenseParticipants = document.getElementById('no-expense-participants');
-        const addAnotherExpenseBtn = document.getElementById('add-another-expense-btn'); // Nuovo pulsante
+        const addAnotherExpenseBtn = document.getElementById('add-another-expense-btn');
 
         // Event Listeners per i radio button
         allParticipantsRadio.addEventListener('change', () => {
             if (allParticipantsRadio.checked) {
                 individualParticipantsSelectionDiv.classList.add('hidden');
-                // Assicurati che tutti i checkbox siano selezionati e disabilitati se visibili
                 const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(cb => {
                     cb.checked = true;
-                    cb.disabled = true; // Disabilita i checkbox individuali
+                    cb.disabled = true;
                 });
             }
         });
@@ -785,29 +869,24 @@
         excludeParticipantsRadio.addEventListener('change', () => {
             if (excludeParticipantsRadio.checked) {
                 individualParticipantsSelectionDiv.classList.remove('hidden');
-                // Abilita i checkbox individuali e reimposta il loro stato
                 const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(cb => {
                     cb.disabled = false;
-                    // Potresti volerli deselezionare tutti per default qui, o mantenere lo stato precedente
-                    // cb.checked = false; // Esempio: deseleziona tutti all'attivazione di "Escludi"
                 });
             }
         });
 
 
-        function renderExpenseParticipantsCheckboxes() {
-            individualParticipantsSelectionDiv.innerHTML = ''; // Pulisci prima di renderizzare
+        function renderExpenseParticipantsCheckboxes(selectedForExpense = []) {
+            individualParticipantsSelectionDiv.innerHTML = '';
             loadingExpenseParticipants.classList.remove('hidden');
             noExpenseParticipants.classList.add('hidden');
             individualParticipantsSelectionDiv.appendChild(loadingExpenseParticipants);
 
-            // Always enable the radio buttons
             allParticipantsRadio.disabled = false;
             excludeParticipantsRadio.disabled = false;
 
             if (!firebaseReady) {
-                // If Firebase is not ready, just show loading for participants
                 return;
             }
 
@@ -815,41 +894,36 @@
                 noExpenseParticipants.classList.remove('hidden');
                 individualParticipantsSelectionDiv.appendChild(noExpenseParticipants);
                 loadingExpenseParticipants.classList.add('hidden');
-
-                // If no participants, ensure individual selection is hidden by default
-                // and radio buttons are set to 'all'
+                allParticipantsRadio.disabled = true;
+                excludeParticipantsRadio.disabled = true;
                 allParticipantsRadio.checked = true;
                 individualParticipantsSelectionDiv.classList.add('hidden');
-
             } else {
                 noExpenseParticipants.classList.add('hidden');
                 loadingExpenseParticipants.classList.add('hidden');
                 
-                // Renderizza i checkbox individuali
                 knownParticipants.forEach(name => {
                     const div = document.createElement('div');
                     div.className = 'participant-checkbox-item';
+                    const isChecked = selectedForExpense.length === 0 || selectedForExpense.includes(name); // Default checked if no specific selection or if included
                     div.innerHTML = `
-                        <input type="checkbox" id="exp-part-${name.replace(/\s/g, '-')}" name="expenseParticipant" value="${name}" checked>
+                        <input type="checkbox" id="exp-part-${name.replace(/\s/g, '-')}" name="expenseParticipant" value="${name}" ${isChecked ? 'checked' : ''}>
                         <label for="exp-part-${name.replace(/\s/g, '-')}" class="text-gray-800 text-sm">${name}</label>
                     `;
                     individualParticipantsSelectionDiv.appendChild(div);
                 });
 
-                // Applica lo stato iniziale basato sul radio button selezionato
-                const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
-                if (allParticipantsRadio.checked) {
+                // Set radio button state based on selectedForExpense
+                if (selectedForExpense.length === 0 || selectedForExpense.length === knownParticipants.length) {
+                    allParticipantsRadio.checked = true;
                     individualParticipantsSelectionDiv.classList.add('hidden');
-                    checkboxes.forEach(cb => {
-                        cb.checked = true;
-                        cb.disabled = true;
-                    });
-                } else if (excludeParticipantsRadio.checked) {
+                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => { cb.disabled = true; });
+                } else {
+                    excludeParticipantsRadio.checked = true;
                     individualParticipantsSelectionDiv.classList.remove('hidden');
-                    checkboxes.forEach(cb => {
-                        cb.disabled = false;
-                        // Keep their checked state as it was, or reset if desired
-                    });
+                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => { cb.disabled = false; });
                 }
             }
         }
@@ -861,23 +935,50 @@
                 (confirmed) => {
                     if (confirmed) {
                         showView('add-expense-form-container');
-                        // Resetta il form e i radio button
+                        expenseFormTitle.textContent = 'Aggiungi Nuova Spesa';
+                        submitExpenseBtn.textContent = 'Aggiungi Spesa';
+                        expenseIdToEdit.value = ''; // Clear ID for new entry
                         expenseForm.reset();
-                        allParticipantsRadio.checked = true; // Default a "Tutti"
+                        allParticipantsRadio.checked = true;
                         expenseMessage.textContent = '';
-                        renderExpenseParticipantsCheckboxes(); // Ricarica i checkbox con lo stato corretto
+                        renderExpenseParticipantsCheckboxes();
                     }
                 }
             );
         });
 
-        // Nuovo event listener per il pulsante "Aggiungi un'altra spesa"
         addAnotherExpenseBtn.addEventListener('click', () => {
-            expenseForm.reset(); // Resetta il form
-            allParticipantsRadio.checked = true; // Resetta la selezione a "Tutti"
-            expenseMessage.textContent = ''; // Pulisci i messaggi
-            renderExpenseParticipantsCheckboxes(); // Ricarica i checkbox con lo stato corretto
+            expenseFormTitle.textContent = 'Aggiungi Nuova Spesa';
+            submitExpenseBtn.textContent = 'Aggiungi Spesa';
+            expenseIdToEdit.value = ''; // Clear ID for new entry
+            expenseForm.reset();
+            allParticipantsRadio.checked = true;
+            expenseMessage.textContent = '';
+            renderExpenseParticipantsCheckboxes();
         });
+
+        async function editExpense(expenseId) {
+            openPasswordModal(
+                'Modifica Spesa',
+                'Per modificare questa spesa, inserisci la password.',
+                (confirmed) => {
+                    if (confirmed) {
+                        showView('add-expense-form-container');
+                        expenseFormTitle.textContent = 'Modifica Spesa';
+                        submitExpenseBtn.textContent = 'Salva Modifiche';
+                        expenseIdToEdit.value = expenseId;
+
+                        const expense = allExpensesData.find(e => e.id === expenseId);
+                        if (expense) {
+                            expenseDateInput.value = expense.date instanceof Timestamp ? expense.date.toDate().toISOString().split('T')[0] : expense.date;
+                            expenseCostInput.value = Math.ceil(expense.cost);
+                            expenseDescriptionInput.value = expense.description;
+                            renderExpenseParticipantsCheckboxes(expense.includedParticipants || []);
+                        }
+                    }
+                }
+            );
+        }
 
         expenseForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -888,8 +989,9 @@
                 return;
             }
 
+            const id = expenseIdToEdit.value;
             const date = expenseDateInput.value;
-            const cost = Math.ceil(parseFloat(expenseCostInput.value)); // Arrotonda per eccesso
+            const cost = Math.ceil(parseFloat(expenseCostInput.value));
             const description = expenseDescriptionInput.value.trim();
 
             if (!date || isNaN(cost) || cost <= 0 || !description) {
@@ -900,50 +1002,61 @@
 
             let finalIncludedParticipants = [];
             if (allParticipantsRadio.checked) {
-                finalIncludedParticipants = knownParticipants; // Se 'all', usa la lista completa dei partecipanti conosciuti
+                finalIncludedParticipants = knownParticipants;
             } else if (excludeParticipantsRadio.checked) {
                 finalIncludedParticipants = Array.from(individualParticipantsSelectionDiv.querySelectorAll('input[name="expenseParticipant"]:checked'))
                                             .map(checkbox => checkbox.value);
             }
 
-            // Validazione: Se 'Escludi' è selezionato e non ci sono partecipanti selezionati
-            if (finalIncludedParticipants.length === 0 && excludeParticipantsRadio.checked) {
+            if (finalIncludedParticipants.length === 0 && knownParticipants.length > 0) {
                 expenseMessage.textContent = 'Devi selezionare almeno un partecipante specifico per la spesa.';
                 expenseMessage.className = 'message error';
-                submitExpenseBtn.disabled = false; // Riabilita il pulsante
+                submitExpenseBtn.disabled = false;
                 submitExpenseBtn.classList.remove('loading-button');
-                submitExpenseBtn.textContent = 'Aggiungi Spesa';
+                submitExpenseBtn.textContent = id ? 'Salva Modifiche' : 'Aggiungi Spesa';
+                return;
+            }
+            if (finalIncludedParticipants.length === 0 && knownParticipants.length === 0) {
+                expenseMessage.textContent = 'Nessun partecipante selezionato. Aggiungi partecipanti tramite le entrate.';
+                expenseMessage.className = 'message error';
+                submitExpenseBtn.disabled = false;
+                submitExpenseBtn.classList.remove('loading-button');
+                submitExpenseBtn.textContent = id ? 'Salva Modifiche' : 'Aggiungi Spesa';
                 return;
             }
 
 
             submitExpenseBtn.disabled = true;
             submitExpenseBtn.classList.add('loading-button');
-            submitExpenseBtn.textContent = 'Aggiungendo...';
-            expenseMessage.textContent = ''; // Pulisci i messaggi precedenti
+            submitExpenseBtn.textContent = id ? 'Salvando...' : 'Aggiungendo...';
+            expenseMessage.textContent = '';
 
             try {
-                await addDoc(collection(db, `public_travel_expenses`), {
+                const expenseData = {
                     date: Timestamp.fromDate(new Date(date)),
                     cost: cost,
                     description: description,
-                    includedParticipants: finalIncludedParticipants, // Salva i partecipanti inclusi
+                    includedParticipants: finalIncludedParticipants,
                     timestamp: Timestamp.now()
-                });
-                expenseMessage.textContent = 'Spesa aggiunta con successo!';
+                };
+
+                if (id) {
+                    await setDoc(doc(db, `public_travel_expenses`, id), expenseData);
+                    expenseMessage.textContent = 'Spesa modificata con successo!';
+                } else {
+                    await addDoc(collection(db, `public_travel_expenses`), expenseData);
+                    expenseMessage.textContent = 'Spesa aggiunta con successo!';
+                }
                 expenseMessage.className = 'message success';
-                // Non resettare il form qui, il pulsante "Aggiungi un'altra spesa" lo farà
-                // expenseForm.reset();
-                // allParticipantsRadio.checked = true;
-                // renderExpenseParticipantsCheckboxes();
+                // No reset here, let "Add another expense" button handle it
             } catch (error) {
-                console.error("Errore nell'aggiungere la spesa:", error);
-                expenseMessage.textContent = 'Errore durante l\'aggiunta della spesa. Riprova.';
+                console.error("Errore nell'operazione spesa:", error);
+                expenseMessage.textContent = `Errore durante l'operazione. Riprova. ${error.message}`;
                 expenseMessage.className = 'message error';
             } finally {
                 submitExpenseBtn.disabled = false;
                 submitExpenseBtn.classList.remove('loading-button');
-                submitExpenseBtn.textContent = 'Aggiungi Spesa';
+                submitExpenseBtn.textContent = id ? 'Salva Modifiche' : 'Aggiungi Spesa';
             }
         });
 
@@ -954,6 +1067,7 @@
         const loadingExpenses = document.getElementById('loading-expenses');
         const noExpenses = document.getElementById('no-expenses');
         const expensesTableWrapper = document.getElementById('expenses-table-wrapper');
+        const exportDataBtn = document.getElementById('export-data-btn');
 
         // Nuovo elemento per la differenza totale
         const overallDifferenceSection = document.getElementById('overall-difference-section');
@@ -1051,9 +1165,15 @@
                         participantsCell.classList.add('cursor-pointer', 'underline'); // Aggiungi stile per indicare che è cliccabile
                         participantsCell.title = 'Clicca per vedere tutti i partecipanti';
                         participantsCell.addEventListener('click', () => {
-                            alert(`Partecipanti: ${participantsList}`);
+                            openCustomDetailsModal('Partecipanti Spesa', `Partecipanti: ${participantsList}`);
                         });
                     }
+
+                    const editIcon = document.createElement('i');
+                    editIcon.className = 'fas fa-pencil-alt edit-icon';
+                    editIcon.title = 'Modifica spesa';
+                    editIcon.addEventListener('click', () => editExpense(expense.id));
+                    actionCell.appendChild(editIcon);
 
                     const deleteIcon = document.createElement('i');
                     deleteIcon.className = 'fas fa-trash-alt delete-icon';
@@ -1073,6 +1193,56 @@
             }
             loadingExpenses.classList.add('hidden');
         }
+
+        // Funzione per esportare i dati in CSV
+        exportDataBtn.addEventListener('click', exportDataToCSV);
+
+        function exportDataToCSV() {
+            if (!allExpensesData.length && !allIncomesData.length) {
+                alert("Non ci sono dati da esportare.");
+                return;
+            }
+
+            let csvContent = "";
+
+            // Intestazione Spese
+            csvContent += "SPESE\n";
+            csvContent += "Data;Costo (LKR);Descrizione;Partecipanti\n";
+            allExpensesData.forEach(expense => {
+                const date = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
+                const cost = Math.ceil(expense.cost).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                const description = `"${expense.description.replace(/"/g, '""')}"`; // Escape quotes
+                const participants = `"${(expense.includedParticipants && expense.includedParticipants.length > 0 ? expense.includedParticipants.join(', ') : 'Nessuno').replace(/"/g, '""')}"`;
+                csvContent += `${date};${cost};${description};${participants}\n`;
+            });
+            csvContent += "\n\n";
+
+            // Intestazione Entrate
+            csvContent += "ENTRATE\n";
+            csvContent += "Data;Importo (LKR);Partecipante;Descrizione\n";
+            allIncomesData.forEach(income => {
+                const date = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
+                const amount = Math.ceil(income.amount).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                const participantName = `"${(income.participantName || 'Sconosciuto').replace(/"/g, '""')}"`;
+                const description = `"${(income.description || 'Nessuna descrizione').replace(/"/g, '""')}"`;
+                csvContent += `${date};${amount};${participantName};${description}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { // Feature detection
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'dati_viaggio.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                alert("Il tuo browser non supporta il download diretto di file CSV.");
+            }
+        }
+
 
         // --- Gestione Entrate ---
         const addIncomeBtn = document.getElementById('add-income-btn');
@@ -1234,7 +1404,6 @@
                         const dateCell = row.insertCell();
                         const totalCell = row.insertCell();
                         const descriptionCell = row.insertCell();
-                        // const detailsCell = row.insertCell(); // Rimosso
                         const actionCell = row.insertCell(); // Nuova cella per l'azione
 
                         const displayDate = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
@@ -1243,8 +1412,6 @@
                         totalCell.textContent = `${Math.ceil(income.amount).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} LKR (${income.participantName})`; // Arrotonda e formatta
                         descriptionCell.textContent = income.description;
                         dateCell.textContent = displayDate;
-
-                        // Rimosso il pulsante dettagli
 
                         const deleteIcon = document.createElement('i');
                         deleteIcon.className = 'fas fa-trash-alt delete-icon';
@@ -1255,7 +1422,6 @@
                         dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
                         totalCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
                         descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
-                        // detailsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500"; // Rimosso
                         actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
                     });
                 }
@@ -1587,6 +1753,14 @@
         const noSingleExpenses = document.getElementById('no-single-expenses');
         const singleParticipantExpensesTableWrapper = document.getElementById('single-participant-expenses-table-wrapper');
 
+        // Nuovi elementi per il riepilogo singolo partecipante
+        const singleParticipantSummarySection = document.getElementById('single-participant-summary-section');
+        const singleParticipantSummaryName = document.getElementById('single-participant-summary-name');
+        const singleParticipantIncomeValue = document.getElementById('single-participant-income-value');
+        const singleParticipantExpenseValue = document.getElementById('single-participant-expense-value');
+        const singleParticipantBalanceValue = document.getElementById('single-participant-balance-value');
+
+
         viewSingleParticipantExpensesBtn.addEventListener('click', () => {
             showView('view-single-participant-expenses-container');
         });
@@ -1595,14 +1769,16 @@
             const selectedName = e.target.value;
             if (selectedName) {
                 displaySingleParticipantExpenses(selectedName);
+                calculateSingleParticipantSummary(selectedName); // Calcola e visualizza il riepilogo
             } else {
-                // Se non è selezionato nessun partecipante, pulisci la tabella
+                // Se non è selezionato nessun partecipante, pulisci la tabella e il riepilogo
                 selectedParticipantNameSpan.textContent = "";
                 totalSingleParticipantCostDisplay.classList.add('hidden');
                 singleParticipantExpensesTableWrapper.classList.add('hidden');
                 noSingleExpenses.classList.add('hidden');
                 loadingSingleExpenses.classList.add('hidden');
                 singleParticipantExpensesTableBody.innerHTML = '';
+                singleParticipantSummarySection.classList.add('hidden'); // Nascondi il riepilogo
             }
         });
 
@@ -1667,6 +1843,57 @@
                 totalSingleParticipantCostValue.textContent = Math.ceil(totalParticipantExpense).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             }
             loadingSingleExpenses.classList.add('hidden');
+        }
+
+        async function calculateSingleParticipantSummary(participantName) {
+            singleParticipantSummarySection.classList.add('hidden'); // Nascondi all'inizio del calcolo
+            singleParticipantSummaryName.textContent = participantName; // Imposta il nome nel riepilogo
+
+            let incomeForParticipant = 0;
+            let expenseForParticipant = 0;
+
+            // Calcola entrate per il partecipante
+            allIncomesData.forEach(income => {
+                if (income.participantName === participantName) {
+                    incomeForParticipant += income.amount;
+                }
+            });
+
+            // Calcola spese per il partecipante
+            allExpensesData.forEach(expense => {
+                if (expense.includedParticipants && expense.includedParticipants.includes(participantName)) {
+                    const quota = expense.includedParticipants.length > 0 ? expense.cost / expense.includedParticipants.length : 0;
+                    expenseForParticipant += quota;
+                }
+            });
+
+            const balance = incomeForParticipant - expenseForParticipant;
+
+            singleParticipantIncomeValue.textContent = Math.ceil(incomeForParticipant).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            singleParticipantExpenseValue.textContent = Math.ceil(expenseForParticipant).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            singleParticipantBalanceValue.textContent = Math.ceil(balance).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+            // Applica la formattazione del colore al testo della differenza
+            singleParticipantBalanceValue.classList.remove('overall-balance-text-positive', 'overall-balance-text-negative', 'overall-balance-text-zero');
+            if (balance > 0) {
+                singleParticipantBalanceValue.classList.add('overall-balance-text-positive');
+            } else if (balance < 0) {
+                singleParticipantBalanceValue.classList.add('overall-balance-text-negative');
+            } else {
+                singleParticipantBalanceValue.classList.add('overall-balance-text-zero');
+            }
+
+            // Applica la formattazione del colore di sfondo alla sezione
+            singleParticipantSummarySection.classList.remove('bg-blue-50', 'bg-red-50', 'bg-green-50');
+            if (balance > 0) {
+                singleParticipantSummarySection.classList.add('bg-green-50');
+            } else if (balance < 0) {
+                singleParticipantSummarySection.classList.add('bg-red-50');
+            } else {
+                singleParticipantSummarySection.classList.add('bg-blue-50');
+            }
+
+            singleParticipantSummarySection.classList.remove('hidden'); // Mostra la sezione
         }
 
 
