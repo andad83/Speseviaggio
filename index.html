@@ -669,7 +669,18 @@
                 // Inizializza KNOWN_PARTICIPANTS_DOC_REF qui, dopo che 'db' è stato impostato
                 KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
 
-                // Setup listeners globali per i dati, così sono sempre aggiornati
+                // --- Fetch initial knownParticipants synchronously ---
+                // This ensures knownParticipants is populated before other UI elements depend on it
+                const docSnapshot = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
+                if (docSnapshot.exists()) {
+                    knownParticipants = docSnapshot.data().names || [];
+                } else {
+                    knownParticipants = [];
+                }
+                console.log("Initial knownParticipants loaded:", knownParticipants);
+                // --- End initial fetch ---
+
+                // Setup global onSnapshot listeners (these will handle subsequent changes)
                 onSnapshot(collection(db, `public_travel_expenses`), (snapshot) => {
                     allExpensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     // Trigger aggiornamenti per le viste attive
