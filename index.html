@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for trash icon -->
+    <!-- Font Awesome for trash icon and lock icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
@@ -82,26 +82,51 @@
         .summary-negative {
             color: #dc2626; /* red-600 */
         }
+        /* Stile per lo sfondo della mappa */
+        #main-screen {
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Sri_Lanka_map_with_provinces.svg/1200px-Sri_Lanka_map_with_provinces.svg.png');
+            background-size: cover;
+            background-position: center;
+            filter: blur(2px); /* Applica un leggero effetto sfocato */
+            transform: scale(1.02); /* Compensare la sfocatura per evitare bordi bianchi */
+            position: relative; /* Necessario per z-index */
+            z-index: 1; /* Assicurati che il contenuto sia sopra lo sfondo */
+            overflow: hidden; /* Nasconde eventuali bordi sfocati che escono */
+        }
+        #main-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8); /* Overlay bianco semi-trasparente */
+            z-index: 2; /* Sopra l'immagine, sotto il contenuto */
+        }
+        #main-screen > *:not(style):not(script) { /* Assicurati che il contenuto sia sopra l'overlay */
+            position: relative;
+            z-index: 3;
+        }
     </style>
 </head>
 <body>
 
     <div id="app-container" class="w-full max-w-md">
         <!-- Contenuto dell'app verrà iniettato qui dal JavaScript -->
-        <div id="main-screen" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto relative z-10">
+        <div id="main-screen" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto">
             <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Gestione Spese di Viaggio</h1>
             <p class="text-gray-600 mb-8" id="initial-loading-message">
                 Caricamento applicazione...
             </p>
             <div class="space-y-4">
                 <button id="add-expense-btn" class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
-                    Inserisci Nuova Spesa
+                    Inserisci Nuova Spesa <i class="fas fa-lock ml-2"></i>
                 </button>
                 <button id="view-expenses-btn" class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
                     Vedi Totale Spese
                 </button>
-                <button id="add-income-btn" class="w-full py-3 px-6 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
-                    Gestisci Entrate
+                <button id="add-income-btn" class="w-full py-3 px-6 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Gestisci Entrate <i class="fas fa-lock ml-2"></i>
                 </button>
             </div>
             <p id="user-id-display" class="mt-8 text-xs text-gray-500 hidden">
@@ -127,7 +152,7 @@
                         type="number"
                         id="expense-cost"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Es. 1500.50"
+                        placeholder="Es. 1.500,50"
                         step="0.01"
                         required
                     />
@@ -214,13 +239,13 @@
                     </table>
                 </div>
                 <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-summary-display">
-                    Totale Entrate Registrate: <span id="total-income-summary-value">0.00</span> LKR
+                    Totale Entrate Registrate: <span id="total-income-summary-value">0,00</span> LKR
                 </div>
             </div>
 
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Dettaglio Spese</h2>
             <p class="text-right text-lg font-bold text-gray-800 mb-4 hidden" id="total-cost-display-top">
-                Totale Generale Spese: <span id="total-cost-value-top">0.00</span> LKR
+                Totale Generale Spese: <span id="total-cost-value-top">0,00</span> LKR
             </p>
             <p class="text-center text-gray-600" id="loading-expenses">Caricamento spese...</p>
             <p class="text-center text-gray-600 hidden" id="no-expenses">Nessuna spesa registrata.</p>
@@ -280,7 +305,7 @@
                         type="number"
                         id="income-amount"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                        placeholder="Es. 5000"
+                        placeholder="Es. 5.000,00"
                         step="0.01"
                         required
                     />
@@ -331,7 +356,7 @@
                 </table>
             </div>
             <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-section-display">
-                Totale Entrate Registrate: <span id="total-income-section-value">0.00</span> LKR
+                Totale Entrate Registrate: <span id="total-income-section-value">0,00</span> LKR
             </div>
 
 
@@ -349,17 +374,14 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Descrizione
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Dettagli
-                            </th>
                              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Azione
                             </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200" id="incomes-table-body">
-                        <tr id="loading-incomes-row"><td colspan="5" class="px-6 py-4 text-center text-gray-600">Caricamento entrate...</td></tr>
-                        <tr id="no-incomes-row" class="hidden"><td colspan="5" class="px-6 py-4 text-center text-gray-600">Nessuna entrata registrata.</td></tr>
+                        <tr id="loading-incomes-row"><td colspan="4" class="px-6 py-4 text-center text-gray-600">Caricamento entrate...</td></tr>
+                        <tr id="no-incomes-row" class="hidden"><td colspan="4" class="px-6 py-4 text-center text-gray-600">Nessuna entrata registrata.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -673,9 +695,12 @@
             noExpenseParticipants.classList.add('hidden');
             individualParticipantsSelectionDiv.appendChild(loadingExpenseParticipants);
 
+            // Always enable the radio buttons
+            allParticipantsRadio.disabled = false;
+            excludeParticipantsRadio.disabled = false;
 
             if (!firebaseReady) {
-                // Già gestito sopra, ma per sicurezza
+                // If Firebase is not ready, just show loading for participants
                 return;
             }
 
@@ -683,15 +708,16 @@
                 noExpenseParticipants.classList.remove('hidden');
                 individualParticipantsSelectionDiv.appendChild(noExpenseParticipants);
                 loadingExpenseParticipants.classList.add('hidden');
-                // Disabilita anche i radio button se non ci sono partecipanti
-                allParticipantsRadio.disabled = true;
-                excludeParticipantsRadio.disabled = true;
+
+                // If no participants, ensure individual selection is hidden by default
+                // and radio buttons are set to 'all'
+                allParticipantsRadio.checked = true;
+                individualParticipantsSelectionDiv.classList.add('hidden');
+
             } else {
                 noExpenseParticipants.classList.add('hidden');
                 loadingExpenseParticipants.classList.add('hidden');
-                allParticipantsRadio.disabled = false;
-                excludeParticipantsRadio.disabled = false;
-
+                
                 // Renderizza i checkbox individuali
                 knownParticipants.forEach(name => {
                     const div = document.createElement('div');
@@ -704,20 +730,18 @@
                 });
 
                 // Applica lo stato iniziale basato sul radio button selezionato
+                const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                 if (allParticipantsRadio.checked) {
                     individualParticipantsSelectionDiv.classList.add('hidden');
-                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                     checkboxes.forEach(cb => {
                         cb.checked = true;
                         cb.disabled = true;
                     });
                 } else if (excludeParticipantsRadio.checked) {
                     individualParticipantsSelectionDiv.classList.remove('hidden');
-                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
                     checkboxes.forEach(cb => {
                         cb.disabled = false;
-                        // Qui potresti decidere se lasciare checked o deselezionare tutti per default
-                        // cb.checked = false;
+                        // Keep their checked state as it was, or reset if desired
                     });
                 }
             }
@@ -769,15 +793,19 @@
 
             let finalIncludedParticipants = [];
             if (allParticipantsRadio.checked) {
-                finalIncludedParticipants = knownParticipants;
+                finalIncludedParticipants = knownParticipants; // Se 'all', usa la lista completa dei partecipanti conosciuti
             } else if (excludeParticipantsRadio.checked) {
                 finalIncludedParticipants = Array.from(individualParticipantsSelectionDiv.querySelectorAll('input[name="expenseParticipant"]:checked'))
                                             .map(checkbox => checkbox.value);
             }
 
-            if (finalIncludedParticipants.length === 0) {
-                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa.';
+            // Validazione: Se 'Escludi' è selezionato e non ci sono partecipanti selezionati
+            if (finalIncludedParticipants.length === 0 && excludeParticipantsRadio.checked) {
+                expenseMessage.textContent = 'Devi selezionare almeno un partecipante specifico per la spesa.';
                 expenseMessage.className = 'message error';
+                submitExpenseBtn.disabled = false; // Riabilita il pulsante
+                submitExpenseBtn.classList.remove('loading-button');
+                submitExpenseBtn.textContent = 'Aggiungi Spesa';
                 return;
             }
 
@@ -875,7 +903,7 @@
 
                 fetchedExpenses.sort((a, b) => {
                     const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
-                    const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
+                    const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.timestamp);
                     return dateB.getTime() - dateA.getTime();
                 });
 
@@ -902,12 +930,27 @@
                         const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
                         const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
                                                 ? expense.includedParticipants.join(', ')
-                                                : 'N/A'; // Se non specificato, o lista vuota
+                                                : 'Nessuno'; // Cambiato da 'N/A' a 'Nessuno'
+
+                        // Tronca la lista dei partecipanti per la visualizzazione
+                        const maxChars = 25;
+                        const truncatedParticipantsList = participantsList.length > maxChars
+                            ? participantsList.substring(0, maxChars - 3) + '...'
+                            : participantsList;
 
                         dateCell.textContent = displayDate;
-                        costCell.textContent = expense.cost.toFixed(2);
+                        costCell.textContent = expense.cost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                         descriptionCell.textContent = expense.description;
-                        participantsCell.textContent = participantsList;
+                        participantsCell.textContent = truncatedParticipantsList;
+
+                        // Aggiungi evento click per il pop-up se la lista è stata troncata
+                        if (participantsList.length > maxChars) {
+                            participantsCell.classList.add('cursor-pointer', 'underline'); // Aggiungi stile per indicare che è cliccabile
+                            participantsCell.title = 'Clicca per vedere tutti i partecipanti';
+                            participantsCell.addEventListener('click', () => {
+                                alert(`Partecipanti: ${participantsList}`);
+                            });
+                        }
 
                         const deleteIcon = document.createElement('i');
                         deleteIcon.className = 'fas fa-trash-alt delete-icon';
@@ -923,7 +966,7 @@
 
                         totalOverallCost += expense.cost;
                     });
-                    totalCostValueTop.textContent = totalOverallCost.toFixed(2);
+                    totalCostValueTop.textContent = totalOverallCost.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 }
                 loadingExpenses.classList.add('hidden');
             }, (error) => {
@@ -1096,26 +1139,17 @@
                         const dateCell = row.insertCell();
                         const totalCell = row.insertCell();
                         const descriptionCell = row.insertCell();
-                        const detailsCell = row.insertCell();
+                        // const detailsCell = row.insertCell(); // Rimosso
                         const actionCell = row.insertCell(); // Nuova cella per l'azione
 
                         const displayDate = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
 
-                        // Per le entrate singole, il "totale" è l'importo versato
-                        totalCell.textContent = income.amount.toFixed(2) + ' LKR';
+                        // Per le entrate singole, il "totale" è l'importo versato + nome partecipante
+                        totalCell.textContent = `${income.amount.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} LKR (${income.participantName})`;
                         descriptionCell.textContent = income.description;
                         dateCell.textContent = displayDate;
 
-                        const detailsButton = document.createElement('button');
-                        detailsButton.textContent = 'Vedi Dettagli';
-                        detailsButton.className = 'text-blue-600 hover:text-blue-800 text-sm font-medium';
-                        detailsButton.addEventListener('click', () => {
-                            // Dettagli ora mostrano il singolo partecipante e importo
-                            let details = `Dettagli Entrata (${displayDate}, Partecipante: ${income.participantName}, Importo: ${income.amount.toFixed(2)} LKR):\n\n`;
-                            details += `Descrizione: ${income.description || 'Nessuna'}`;
-                            alert(details);
-                        });
-                        detailsCell.appendChild(detailsButton);
+                        // Rimosso il pulsante dettagli
 
                         const deleteIcon = document.createElement('i');
                         deleteIcon.className = 'fas fa-trash-alt delete-icon';
@@ -1126,7 +1160,7 @@
                         dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
                         totalCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
                         descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
-                        detailsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        // detailsCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500"; // Rimosso
                         actionCell.className = "px-6 py-4 whitespace-nowrap text-right text-sm font-medium";
                     });
                 }
@@ -1235,9 +1269,9 @@
                     const balanceCell = row.insertCell();
 
                     nameCell.textContent = name;
-                    incomeCell.textContent = data.income.toFixed(2);
-                    expenseCell.textContent = data.expense.toFixed(2);
-                    balanceCell.textContent = data.balance.toFixed(2);
+                    incomeCell.textContent = data.income.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    expenseCell.textContent = data.expense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    balanceCell.textContent = data.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
                     balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
                     balanceCell.classList.add('font-semibold');
@@ -1252,7 +1286,7 @@
                 if (hasSummaryData) {
                     summaryTableWrapper.classList.remove('hidden');
                     totalIncomeSummaryDisplay.classList.remove('hidden');
-                    totalIncomeSummaryValue.textContent = totalOverallIncome.toFixed(2);
+                    totalIncomeSummaryValue.textContent = totalOverallIncome.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     noSummaryData.classList.add('hidden');
                 } else {
                     summaryTableWrapper.classList.add('hidden');
@@ -1351,9 +1385,9 @@
                     const balanceCell = row.insertCell();
 
                     nameCell.textContent = name;
-                    incomeCell.textContent = data.income.toFixed(2);
-                    expenseCell.textContent = data.expense.toFixed(2);
-                    balanceCell.textContent = data.balance.toFixed(2);
+                    incomeCell.textContent = data.income.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    expenseCell.textContent = data.expense.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    balanceCell.textContent = data.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
                     balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
                     balanceCell.classList.add('font-semibold');
@@ -1368,7 +1402,7 @@
                 if (hasSummaryData) {
                     incomeSummaryTableWrapper.classList.remove('hidden');
                     totalIncomeSectionDisplay.classList.remove('hidden');
-                    totalIncomeSectionValue.textContent = totalOverallIncome.toFixed(2);
+                    totalIncomeSectionValue.textContent = totalOverallIncome.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     noIncomeSummaryData.classList.add('hidden');
                 } else {
                     incomeSummaryTableWrapper.classList.add('hidden');
