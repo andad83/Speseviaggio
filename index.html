@@ -144,10 +144,19 @@
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Partecipanti alla Spesa:</label>
-                    <div id="expense-participants-checkboxes" class="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto bg-gray-50">
+                    <div class="mb-2">
+                        <input type="radio" id="all-participants-radio" name="participantSelection" value="all" checked>
+                        <label for="all-participants-radio" class="text-gray-800 text-sm font-medium">Tutti i partecipanti</label>
+                    </div>
+                    <div class="mb-2">
+                        <input type="radio" id="exclude-participants-radio" name="participantSelection" value="exclude">
+                        <label for="exclude-participants-radio" class="text-gray-800 text-sm font-medium">Escludi partecipanti specifici</label>
+                    </div>
+
+                    <div id="individual-participants-selection" class="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto bg-gray-50 mt-2 hidden">
                         <p id="loading-expense-participants" class="text-gray-500 text-sm">Caricamento partecipanti...</p>
                         <p id="no-expense-participants" class="text-gray-500 text-sm hidden">Nessun partecipante registrato. Aggiungine in "Gestisci Entrate".</p>
-                        <!-- Checkboxes will be inserted here -->
+                        <!-- Individual checkboxes will be inserted here -->
                     </div>
                 </div>
                 <button
@@ -159,12 +168,20 @@
                 </button>
             </form>
             <p id="expense-message" class="message"></p>
-            <button
-                id="back-to-main-from-add"
-                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-                Torna alla schermata principale
-            </button>
+            <div class="mt-6 flex justify-between space-x-2">
+                <button
+                    id="back-to-main-from-add"
+                    class="w-1/2 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Torna alla schermata principale
+                </button>
+                <button
+                    id="add-another-expense-btn"
+                    class="w-1/2 py-2 px-4 border border-blue-600 rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                    Aggiungi un'altra spesa
+                </button>
+            </div>
         </div>
 
         <div id="view-expenses-list-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-3xl mx-auto my-8">
@@ -245,49 +262,29 @@
         <div id="income-management-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-md mx-auto my-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Gestisci Entrate</h2>
 
-            <!-- La sezione "Gestisci Partecipanti Conosciuti" è stata rimossa da qui -->
-
             <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Aggiungi Nuova Entrata</h3>
-            <form id="income-participant-form" class="space-y-4 mb-6">
+            <form id="income-entry-form" class="space-y-4 mb-6">
                 <div>
-                    <label for="participant-name" class="block text-sm font-medium text-gray-700 mb-1">Nome Partecipante:</label>
+                    <label for="income-participant-name" class="block text-sm font-medium text-gray-700 mb-1">Nome Partecipante:</label>
                     <input
                         type="text"
-                        id="participant-name"
+                        id="income-participant-name"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                         placeholder="Es. Mario Rossi"
+                        required
                     />
                 </div>
                 <div>
-                    <label for="participant-amount" class="block text-sm font-medium text-gray-700 mb-1">Importo Versato (LKR):</label>
+                    <label for="income-amount" class="block text-sm font-medium text-gray-700 mb-1">Importo Versato (LKR):</label>
                     <input
                         type="number"
-                        id="participant-amount"
+                        id="income-amount"
                         class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                         placeholder="Es. 5000"
                         step="0.01"
+                        required
                     />
                 </div>
-                <button
-                    type="button"
-                    id="add-participant-to-income-btn"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400"
-                >
-                    Aggiungi Partecipante all'Entrata
-                </button>
-            </form>
-
-            <div id="current-participants-list" class="mb-6">
-                <h3 class="text-lg font-semibold text-gray-800 mb-3">Partecipanti di questa Entrata:</h3>
-                <ul id="income-participants-ul" class="bg-gray-50 border border-gray-200 rounded-md p-3 space-y-2">
-                    <li id="no-income-participants-msg" class="text-gray-500 text-sm">Nessun partecipante aggiunto a questa entrata.</li>
-                </ul>
-                <div class="text-right text-md font-bold text-gray-700 mt-3">
-                    Totale Entrate Attuali: <span id="current-income-total">0.00</span> LKR
-                </div>
-            </div>
-
-            <form id="save-income-entry-form" class="space-y-4">
                 <div>
                     <label for="income-description" class="block text-sm font-medium text-gray-700 mb-1">Descrizione Entrata (Opzionale):</label>
                     <textarea
@@ -299,14 +296,44 @@
                 </div>
                 <button
                     type="submit"
-                    id="save-income-btn"
+                    id="save-single-income-btn"
                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled
                 >
                     Salva Entrata
                 </button>
             </form>
             <p id="income-message" class="message"></p>
+
+            <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3 text-center">Riepilogo Partecipanti:</h3>
+            <p class="text-center text-gray-600" id="loading-income-summary">Calcolo riepilogo...</p>
+            <p class="text-center text-gray-600 hidden" id="no-income-summary-data">Nessun dato per il riepilogo. Aggiungi spese e entrate.</p>
+            <div id="income-summary-table-wrapper" class="overflow-x-auto hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-3 py-2 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Partecipante
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Entrate (LKR)
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Spese (LKR)
+                            </th>
+                            <th scope="col" class="px-3 py-2 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                Differenza (LKR)
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="income-summary-table-body">
+                        <!-- Summary rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-income-section-display">
+                Totale Entrate Registrate: <span id="total-income-section-value">0.00</span> LKR
+            </div>
+
 
             <h3 class="text-lg font-semibold text-gray-800 mt-8 mb-3 text-center">Entrate Registrate:</h3>
             <div class="overflow-x-auto rounded-lg shadow-md mb-6">
@@ -337,6 +364,15 @@
                 </table>
             </div>
 
+            <div class="mt-6">
+                <button
+                    id="delete-all-data-btn"
+                    class="w-full py-3 px-6 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105"
+                >
+                    Cancella tutti i dati
+                </button>
+            </div>
+
             <button
                 id="back-to-main-from-income"
                 class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -350,7 +386,7 @@
     <div id="password-modal-overlay" class="modal-overlay hidden">
         <div class="modal-content">
             <h3 class="text-lg font-bold text-gray-900 mb-4 text-center" id="password-modal-title">Inserisci Password</h3>
-            <p class="text-gray-600 text-sm mb-4 text-center" id="password-modal-message">Per procedere, inserisci la password "admin".</p>
+            <p class="text-gray-600 text-sm mb-4 text-center" id="password-modal-message">Per procedere, inserisci la password.</p>
             <input
                 type="password"
                 id="password-input"
@@ -417,10 +453,11 @@
             // Aggiorna le viste quando vengono mostrate
             if (viewId === 'view-expenses-list-container') {
                 fetchAndDisplayExpenses();
-                calculateAndDisplaySummary(); // Calcola e mostra il riepilogo
+                calculateAndDisplaySummary(); // Calcola e mostra il riepilogo generale
             } else if (viewId === 'income-management-container') {
-                fetchKnownParticipants(); // Carica i partecipanti conosciuti
+                fetchKnownParticipants(); // Carica i partecipanti conosciuti (per il riepilogo interno)
                 fetchAndDisplayIncomes(); // Carica le entrate registrate
+                calculateAndDisplayParticipantSummaryInIncomeSection(); // Calcola e mostra il riepilogo dei partecipanti nella sezione entrate
                 resetIncomeForm(); // Resetta il form di aggiunta entrata
             } else if (viewId === 'add-expense-form-container') {
                 renderExpenseParticipantsCheckboxes(); // Renderizza i checkbox dei partecipanti
@@ -435,6 +472,10 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+
+                // Inizializza KNOWN_PARTICIPANTS_DOC_REF qui, dopo che 'db' è stato impostato
+                KNOWN_PARTICIPANTS_DOC_REF = doc(db, `app_settings`, `known_participants`);
+
 
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
@@ -491,7 +532,7 @@
 
         function openPasswordModal(title, message, callback) {
             passwordModalTitle.textContent = title;
-            passwordModalMessage.textContent = message;
+            passwordModalMessage.textContent = message; // Messaggio generico
             passwordInput.value = '';
             passwordError.classList.add('hidden');
             passwordModalOverlay.classList.remove('hidden');
@@ -529,23 +570,17 @@
 
         // --- Gestione Partecipanti Conosciuti (Master List gestita implicitamente) ---
         // Riferimento al documento che memorizza i nomi dei partecipanti conosciuti
-        const KNOWN_PARTICIPANTS_DOC_REF = (function() {
-            // Questo pattern assicura che il riferimento al doc sia creato solo quando db è disponibile.
-            // Sarà chiamato una volta che initFirebase ha impostato db.
-            return doc(getFirestore(initializeApp(firebaseConfig)), `app_settings`, `known_participants`);
-        })();
+        let KNOWN_PARTICIPANTS_DOC_REF; // Dichiarata qui, inizializzata in initFirebase
 
         async function fetchKnownParticipants() {
             if (!db || !firebaseReady) {
                 console.error("Firebase non pronto per recuperare i partecipanti conosciuti.");
-                // Anche se la UI di gestione è rimossa, i messaggi di caricamento/errore per i checkbox spese sono utili
                 document.getElementById('loading-expense-participants').textContent = 'Errore: App non pronta per caricare i partecipanti.';
                 document.getElementById('loading-expense-participants').classList.remove('hidden');
                 document.getElementById('no-expense-participants').classList.add('hidden');
                 return;
             }
 
-            // Non mostriamo più la lista esplicita, ma la carichiamo per le checkbox e il riepilogo
             onSnapshot(KNOWN_PARTICIPANTS_DOC_REF, (docSnapshot) => {
                 if (docSnapshot.exists()) {
                     knownParticipants = docSnapshot.data().names || [];
@@ -560,9 +595,13 @@
                 if (!document.getElementById('view-expenses-list-container').classList.contains('hidden')) {
                     calculateAndDisplaySummary();
                 }
+                // Aggiorna il riepilogo nella sezione entrate se la vista è attiva
+                if (!document.getElementById('income-management-container').classList.contains('hidden')) {
+                    calculateAndDisplayParticipantSummaryInIncomeSection();
+                }
+
             }, (error) => {
                 console.error("Errore nel recupero dei partecipanti conosciuti:", error);
-                // Messaggi di errore per i checkbox spese
                 document.getElementById('loading-expense-participants').textContent = 'Errore nel caricamento dei partecipanti.';
                 document.getElementById('loading-expense-participants').classList.remove('hidden');
                 document.getElementById('no-expense-participants').classList.add('hidden');
@@ -571,15 +610,18 @@
 
         // Funzione per aggiungere un partecipante alla lista globale se non già presente
         async function addParticipantToKnownList(name) {
-            if (!db || !firebaseReady || knownParticipants.includes(name)) {
-                return; // Non aggiungere se Firebase non è pronto o il partecipante esiste già
+            if (!db || !firebaseReady) {
+                console.error("Firebase non pronto per aggiungere il partecipante alla lista conosciuta.");
+                return;
             }
-            try {
-                const updatedParticipants = [...knownParticipants, name];
-                await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
-                console.log(`Partecipante '${name}' aggiunto alla lista conosciuta.`);
-            } catch (error) {
-                console.error(`Errore nell'aggiungere '${name}' alla lista conosciuta:`, error);
+            if (!knownParticipants.includes(name)) {
+                try {
+                    const updatedParticipants = [...knownParticipants, name];
+                    await setDoc(KNOWN_PARTICIPANTS_DOC_REF, { names: updatedParticipants });
+                    console.log(`Partecipante '${name}' aggiunto alla lista conosciuta.`);
+                } catch (error) {
+                    console.error(`Errore nell'aggiungere '${name}' alla lista conosciuta:`, error);
+                }
             }
         }
 
@@ -591,26 +633,66 @@
         const expenseDescriptionInput = document.getElementById('expense-description');
         const expenseMessage = document.getElementById('expense-message');
         const submitExpenseBtn = document.getElementById('submit-expense-btn');
-        const expenseParticipantsCheckboxesDiv = document.getElementById('expense-participants-checkboxes');
+        const allParticipantsRadio = document.getElementById('all-participants-radio');
+        const excludeParticipantsRadio = document.getElementById('exclude-participants-radio');
+        const individualParticipantsSelectionDiv = document.getElementById('individual-participants-selection');
         const loadingExpenseParticipants = document.getElementById('loading-expense-participants');
         const noExpenseParticipants = document.getElementById('no-expense-participants');
+        const addAnotherExpenseBtn = document.getElementById('add-another-expense-btn'); // Nuovo pulsante
+
+        // Event Listeners per i radio button
+        allParticipantsRadio.addEventListener('change', () => {
+            if (allParticipantsRadio.checked) {
+                individualParticipantsSelectionDiv.classList.add('hidden');
+                // Assicurati che tutti i checkbox siano selezionati e disabilitati se visibili
+                const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = true;
+                    cb.disabled = true; // Disabilita i checkbox individuali
+                });
+            }
+        });
+
+        excludeParticipantsRadio.addEventListener('change', () => {
+            if (excludeParticipantsRadio.checked) {
+                individualParticipantsSelectionDiv.classList.remove('hidden');
+                // Abilita i checkbox individuali e reimposta il loro stato
+                const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    cb.disabled = false;
+                    // Potresti volerli deselezionare tutti per default qui, o mantenere lo stato precedente
+                    // cb.checked = false; // Esempio: deseleziona tutti all'attivazione di "Escludi"
+                });
+            }
+        });
+
 
         function renderExpenseParticipantsCheckboxes() {
-            expenseParticipantsCheckboxesDiv.innerHTML = '';
+            individualParticipantsSelectionDiv.innerHTML = ''; // Pulisci prima di renderizzare
+            loadingExpenseParticipants.classList.remove('hidden');
+            noExpenseParticipants.classList.add('hidden');
+            individualParticipantsSelectionDiv.appendChild(loadingExpenseParticipants);
+
+
             if (!firebaseReady) {
-                expenseParticipantsCheckboxesDiv.appendChild(loadingExpenseParticipants);
-                loadingExpenseParticipants.classList.remove('hidden');
-                noExpenseParticipants.classList.add('hidden');
+                // Già gestito sopra, ma per sicurezza
                 return;
             }
 
             if (knownParticipants.length === 0) {
                 noExpenseParticipants.classList.remove('hidden');
-                expenseParticipantsCheckboxesDiv.appendChild(noExpenseParticipants);
+                individualParticipantsSelectionDiv.appendChild(noExpenseParticipants);
                 loadingExpenseParticipants.classList.add('hidden');
+                // Disabilita anche i radio button se non ci sono partecipanti
+                allParticipantsRadio.disabled = true;
+                excludeParticipantsRadio.disabled = true;
             } else {
                 noExpenseParticipants.classList.add('hidden');
                 loadingExpenseParticipants.classList.add('hidden');
+                allParticipantsRadio.disabled = false;
+                excludeParticipantsRadio.disabled = false;
+
+                // Renderizza i checkbox individuali
                 knownParticipants.forEach(name => {
                     const div = document.createElement('div');
                     div.className = 'participant-checkbox-item';
@@ -618,25 +700,52 @@
                         <input type="checkbox" id="exp-part-${name.replace(/\s/g, '-')}" name="expenseParticipant" value="${name}" checked>
                         <label for="exp-part-${name.replace(/\s/g, '-')}" class="text-gray-800 text-sm">${name}</label>
                     `;
-                    expenseParticipantsCheckboxesDiv.appendChild(div);
+                    individualParticipantsSelectionDiv.appendChild(div);
                 });
+
+                // Applica lo stato iniziale basato sul radio button selezionato
+                if (allParticipantsRadio.checked) {
+                    individualParticipantsSelectionDiv.classList.add('hidden');
+                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => {
+                        cb.checked = true;
+                        cb.disabled = true;
+                    });
+                } else if (excludeParticipantsRadio.checked) {
+                    individualParticipantsSelectionDiv.classList.remove('hidden');
+                    const checkboxes = individualParticipantsSelectionDiv.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => {
+                        cb.disabled = false;
+                        // Qui potresti decidere se lasciare checked o deselezionare tutti per default
+                        // cb.checked = false;
+                    });
+                }
             }
         }
 
         document.getElementById('add-expense-btn').addEventListener('click', () => {
             openPasswordModal(
                 'Inserisci Password',
-                'Per inserire una nuova spesa, inserisci la password "admin".',
+                'Per inserire una nuova spesa, inserisci la password.',
                 (confirmed) => {
                     if (confirmed) {
                         showView('add-expense-form-container');
-                        // Resetta il form e i checkbox
+                        // Resetta il form e i radio button
                         expenseForm.reset();
+                        allParticipantsRadio.checked = true; // Default a "Tutti"
                         expenseMessage.textContent = '';
-                        renderExpenseParticipantsCheckboxes();
+                        renderExpenseParticipantsCheckboxes(); // Ricarica i checkbox con lo stato corretto
                     }
                 }
             );
+        });
+
+        // Nuovo event listener per il pulsante "Aggiungi un'altra spesa"
+        addAnotherExpenseBtn.addEventListener('click', () => {
+            expenseForm.reset(); // Resetta il form
+            allParticipantsRadio.checked = true; // Resetta la selezione a "Tutti"
+            expenseMessage.textContent = ''; // Pulisci i messaggi
+            renderExpenseParticipantsCheckboxes(); // Ricarica i checkbox con lo stato corretto
         });
 
         expenseForm.addEventListener('submit', async (e) => {
@@ -658,16 +767,16 @@
                 return;
             }
 
-            const selectedParticipants = Array.from(expenseParticipantsCheckboxesDiv.querySelectorAll('input[name="expenseParticipant"]:checked'))
+            let finalIncludedParticipants = [];
+            if (allParticipantsRadio.checked) {
+                finalIncludedParticipants = knownParticipants;
+            } else if (excludeParticipantsRadio.checked) {
+                finalIncludedParticipants = Array.from(individualParticipantsSelectionDiv.querySelectorAll('input[name="expenseParticipant"]:checked'))
                                             .map(checkbox => checkbox.value);
-
-            if (selectedParticipants.length === 0 && knownParticipants.length > 0) {
-                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa.';
-                expenseMessage.className = 'message error';
-                return;
             }
-             if (selectedParticipants.length === 0 && knownParticipants.length === 0) {
-                expenseMessage.textContent = 'Nessun partecipante selezionato. Aggiungi partecipanti tramite le entrate.';
+
+            if (finalIncludedParticipants.length === 0) {
+                expenseMessage.textContent = 'Devi selezionare almeno un partecipante per la spesa.';
                 expenseMessage.className = 'message error';
                 return;
             }
@@ -683,13 +792,15 @@
                     date: Timestamp.fromDate(new Date(date)),
                     cost: cost,
                     description: description,
-                    includedParticipants: selectedParticipants, // Salva i partecipanti inclusi
+                    includedParticipants: finalIncludedParticipants, // Salva i partecipanti inclusi
                     timestamp: Timestamp.now()
                 });
                 expenseMessage.textContent = 'Spesa aggiunta con successo!';
                 expenseMessage.className = 'message success';
-                expenseForm.reset(); // Resetta il form
-                renderExpenseParticipantsCheckboxes(); // Resetta i checkbox
+                // Non resettare il form qui, il pulsante "Aggiungi un'altra spesa" lo farà
+                // expenseForm.reset();
+                // allParticipantsRadio.checked = true;
+                // renderExpenseParticipantsCheckboxes();
             } catch (error) {
                 console.error("Errore nell'aggiungere la spesa:", error);
                 expenseMessage.textContent = 'Errore durante l\'aggiunta della spesa. Riprova.';
@@ -716,7 +827,7 @@
         async function handleDeleteExpense(expenseId) {
             openPasswordModal(
                 'Conferma Cancellazione Spesa',
-                'Per cancellare questa spesa, inserisci la password "admin".',
+                'Per cancellare questa spesa, inserisci la password.',
                 async (confirmed) => {
                     if (confirmed) {
                         try {
@@ -791,7 +902,7 @@
                         const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
                         const participantsList = expense.includedParticipants && expense.includedParticipants.length > 0
                                                 ? expense.includedParticipants.join(', ')
-                                                : 'Tutti i partecipanti'; // Default se non specificato
+                                                : 'N/A'; // Se non specificato, o lista vuota
 
                         dateCell.textContent = displayDate;
                         costCell.textContent = expense.cost.toFixed(2);
@@ -827,25 +938,29 @@
 
         // --- Gestione Entrate ---
         const addIncomeBtn = document.getElementById('add-income-btn');
-        const participantNameInput = document.getElementById('participant-name');
-        const participantAmountInput = document.getElementById('participant-amount');
-        const addParticipantToIncomeBtn = document.getElementById('add-participant-to-income-btn');
-        const incomeParticipantsUl = document.getElementById('income-participants-ul');
-        const noIncomeParticipantsMsg = document.getElementById('no-income-participants-msg');
-        const currentIncomeTotalSpan = document.getElementById('current-income-total');
+        const incomeParticipantNameInput = document.getElementById('income-participant-name'); // Renamed ID
+        const incomeAmountInput = document.getElementById('income-amount'); // Renamed ID
         const incomeDescriptionInput = document.getElementById('income-description');
-        const saveIncomeBtn = document.getElementById('save-income-btn');
+        const saveSingleIncomeBtn = document.getElementById('save-single-income-btn'); // Renamed ID
         const incomeMessage = document.getElementById('income-message');
         const incomesTableBody = document.getElementById('incomes-table-body');
         const loadingIncomesRow = document.getElementById('loading-incomes-row');
         const noIncomesRow = document.getElementById('no-incomes-row');
+        const deleteAllDataBtn = document.getElementById('delete-all-data-btn'); // Nuovo pulsante
 
-        let currentIncomeParticipants = []; // Array temporaneo per i partecipanti di una singola entrata
+        // Nuovi elementi per il riepilogo partecipanti nella sezione entrate
+        const incomeSummaryTableBody = document.getElementById('income-summary-table-body');
+        const loadingIncomeSummary = document.getElementById('loading-income-summary');
+        const noIncomeSummaryData = document.getElementById('no-income-summary-data');
+        const incomeSummaryTableWrapper = document.getElementById('income-summary-table-wrapper');
+        const totalIncomeSectionDisplay = document.getElementById('total-income-section-display');
+        const totalIncomeSectionValue = document.getElementById('total-income-section-value');
+
 
         addIncomeBtn.addEventListener('click', () => {
             openPasswordModal(
                 'Inserisci Password',
-                'Per gestire le entrate, inserisci la password "admin".',
+                'Per gestire le entrate, inserisci la password.',
                 (confirmed) => {
                     if (confirmed) {
                         showView('income-management-container');
@@ -855,53 +970,8 @@
             );
         });
 
-        addParticipantToIncomeBtn.addEventListener('click', () => {
-            const name = participantNameInput.value.trim();
-            const amount = parseFloat(participantAmountInput.value);
-
-            if (!name || isNaN(amount) || amount <= 0) {
-                incomeMessage.textContent = 'Per favore, inserisci un nome e un importo valido per il partecipante.';
-                incomeMessage.className = 'message error';
-                return;
-            }
-
-            currentIncomeParticipants.push({ name, amount });
-            updateIncomeParticipantsList();
-            participantNameInput.value = '';
-            participantAmountInput.value = '';
-            incomeMessage.textContent = '';
-            saveIncomeBtn.disabled = currentIncomeParticipants.length === 0;
-        });
-
-        function updateIncomeParticipantsList() {
-            incomeParticipantsUl.innerHTML = '';
-            let total = 0;
-            if (currentIncomeParticipants.length === 0) {
-                noIncomeParticipantsMsg.classList.remove('hidden');
-                incomeParticipantsUl.appendChild(noIncomeParticipantsMsg);
-            } else {
-                noIncomeParticipantsMsg.classList.add('hidden');
-                currentIncomeParticipants.forEach((p, index) => {
-                    const li = document.createElement('li');
-                    li.className = 'flex justify-between items-center text-gray-700 text-sm';
-                    li.innerHTML = `
-                        <span>${p.name}: ${p.amount.toFixed(2)} LKR</span>
-                        <button type="button" class="text-red-500 hover:text-red-700 text-xs ml-2" data-index="${index}">Rimuovi</button>
-                    `;
-                    li.querySelector('button').addEventListener('click', (e) => {
-                        const idx = parseInt(e.target.dataset.index);
-                        currentIncomeParticipants.splice(idx, 1);
-                        updateIncomeParticipantsList();
-                        saveIncomeBtn.disabled = currentIncomeParticipants.length === 0;
-                    });
-                    incomeParticipantsUl.appendChild(li);
-                    total += p.amount;
-                });
-            }
-            currentIncomeTotalSpan.textContent = total.toFixed(2);
-        }
-
-        saveIncomeBtn.addEventListener('click', async (e) => {
+        // Modificato per salvare una singola entrata direttamente
+        document.getElementById('income-entry-form').addEventListener('submit', async (e) => {
             e.preventDefault();
 
             if (!db || !currentUserId || !firebaseReady) {
@@ -910,33 +980,35 @@
                 return;
             }
 
-            if (currentIncomeParticipants.length === 0) {
-                incomeMessage.textContent = 'Per favore, aggiungi almeno un partecipante prima di salvare l\'entrata.';
+            const name = incomeParticipantNameInput.value.trim();
+            const amount = parseFloat(incomeAmountInput.value);
+            const description = incomeDescriptionInput.value.trim();
+
+            if (!name || isNaN(amount) || amount <= 0) {
+                incomeMessage.textContent = 'Per favore, inserisci un nome e un importo valido per il partecipante.';
                 incomeMessage.className = 'message error';
                 return;
             }
 
-            saveIncomeBtn.disabled = true;
-            saveIncomeBtn.classList.add('loading-button');
-            saveIncomeBtn.textContent = 'Salvando...';
+            saveSingleIncomeBtn.disabled = true;
+            saveSingleIncomeBtn.classList.add('loading-button');
+            saveSingleIncomeBtn.textContent = 'Salvando...';
             incomeMessage.textContent = '';
 
-            const totalAmount = currentIncomeParticipants.reduce((sum, p) => sum + p.amount, 0);
-
             try {
+                // Salva l'entrata come un singolo documento
                 await addDoc(collection(db, `public_incomes`), {
                     timestamp: Timestamp.now(),
-                    description: incomeDescriptionInput.value.trim() || 'Nessuna descrizione',
-                    participants: currentIncomeParticipants,
-                    totalAmount: totalAmount
+                    description: description || 'Nessuna descrizione',
+                    // Salva il singolo partecipante e importo direttamente
+                    participantName: name,
+                    amount: amount
                 });
                 incomeMessage.textContent = 'Entrata salvata con successo!';
                 incomeMessage.className = 'message success';
-                resetIncomeForm();
-                fetchAndDisplayIncomes();
-
-                // Aggiungi i partecipanti di questa entrata alla lista dei partecipanti conosciuti
-                currentIncomeParticipants.forEach(p => addParticipantToKnownList(p.name));
+                resetIncomeForm(); // Resetta il form
+                fetchAndDisplayIncomes(); // Aggiorna la lista delle entrate
+                addParticipantToKnownList(name); // Aggiungi il partecipante alla lista globale se nuovo
 
             }
             catch (error) {
@@ -944,16 +1016,16 @@
                 incomeMessage.textContent = 'Errore durante il salvataggio dell\'entrata. Riprova.';
                 incomeMessage.className = 'message error';
             } finally {
-                saveIncomeBtn.disabled = false;
-                saveIncomeBtn.classList.remove('loading-button');
-                saveIncomeBtn.textContent = 'Salva Entrata';
+                saveSingleIncomeBtn.disabled = false;
+                saveSingleIncomeBtn.classList.remove('loading-button');
+                saveSingleIncomeBtn.textContent = 'Salva Entrata';
             }
         });
 
         async function handleDeleteIncome(incomeId) {
             openPasswordModal(
                 'Conferma Cancellazione Entrata',
-                'Per cancellare questa entrata, inserisci la password "admin".',
+                'Per cancellare questa entrata, inserisci la password.',
                 async (confirmed) => {
                     if (confirmed) {
                         try {
@@ -970,13 +1042,11 @@
         }
 
         function resetIncomeForm() {
-            participantNameInput.value = '';
-            participantAmountInput.value = '';
+            incomeParticipantNameInput.value = '';
+            incomeAmountInput.value = '';
             incomeDescriptionInput.value = '';
-            currentIncomeParticipants = [];
-            updateIncomeParticipantsList();
-            saveIncomeBtn.disabled = true;
             incomeMessage.textContent = '';
+            saveSingleIncomeBtn.disabled = false; // Assicurati che il pulsante non sia disabilitato dopo il reset
         }
 
         function fetchAndDisplayIncomes() {
@@ -1031,18 +1101,18 @@
 
                         const displayDate = income.timestamp instanceof Timestamp ? income.timestamp.toDate().toLocaleDateString('it-IT') : new Date(income.timestamp).toLocaleDateString('it-IT');
 
-                        dateCell.textContent = displayDate;
-                        totalCell.textContent = income.totalAmount.toFixed(2) + ' LKR';
+                        // Per le entrate singole, il "totale" è l'importo versato
+                        totalCell.textContent = income.amount.toFixed(2) + ' LKR';
                         descriptionCell.textContent = income.description;
+                        dateCell.textContent = displayDate;
 
                         const detailsButton = document.createElement('button');
                         detailsButton.textContent = 'Vedi Dettagli';
                         detailsButton.className = 'text-blue-600 hover:text-blue-800 text-sm font-medium';
                         detailsButton.addEventListener('click', () => {
-                            let details = `Dettagli Entrata (${displayDate}, Totale: ${income.totalAmount.toFixed(2)} LKR):\n\n`;
-                            income.participants.forEach(p => {
-                                details += `- ${p.name}: ${p.amount.toFixed(2)} LKR\n`;
-                            });
+                            // Dettagli ora mostrano il singolo partecipante e importo
+                            let details = `Dettagli Entrata (${displayDate}, Partecipante: ${income.participantName}, Importo: ${income.amount.toFixed(2)} LKR):\n\n`;
+                            details += `Descrizione: ${income.description || 'Nessuna'}`;
                             alert(details);
                         });
                         detailsCell.appendChild(detailsButton);
@@ -1068,7 +1138,7 @@
             });
         }
 
-        // --- Calcolo e Visualizzazione Riepilogo ---
+        // --- Calcolo e Visualizzazione Riepilogo Generale (in Vedi Totale Spese) ---
         const summaryTableBody = document.getElementById('summary-table-body');
         const loadingSummary = document.getElementById('loading-summary');
         const noSummaryData = document.getElementById('no-summary-data');
@@ -1078,7 +1148,7 @@
 
         async function calculateAndDisplaySummary() {
             if (!db || !firebaseReady) {
-                console.error("Firebase non pronto per calcolare il riepilogo.");
+                console.error("Firebase non pronto per calcolare il riepilogo generale.");
                 loadingSummary.textContent = 'Errore: Applicazione non pronta per il riepilogo.';
                 loadingSummary.classList.remove('hidden');
                 noSummaryData.classList.add('hidden');
@@ -1097,7 +1167,7 @@
                 // 1. Recupera tutti i dati necessari
                 const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
                 const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
-                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF); // Ottieni la lista dei partecipanti conosciuti
+                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
 
                 const allExpenses = [];
                 expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
@@ -1105,7 +1175,6 @@
                 const allIncomes = [];
                 incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
 
-                // Assicurati che knownParticipants sia aggiornato prima di usarlo per il riepilogo
                 const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
 
                 // 2. Inizializza il riepilogo per ogni partecipante conosciuto
@@ -1118,13 +1187,13 @@
 
                 // 3. Calcola le entrate per ogni partecipante
                 allIncomes.forEach(income => {
-                    totalOverallIncome += income.totalAmount;
-                    if (income.participants && Array.isArray(income.participants)) {
-                        income.participants.forEach(p => {
-                            // Aggiungi il partecipante al riepilogo se non era già nella lista conosciuta
-                            participantSummary[p.name] = participantSummary[p.name] || { income: 0, expense: 0, balance: 0 };
-                            participantSummary[p.name].income += p.amount;
-                        });
+                    totalOverallIncome += income.amount; // Usa income.amount per le entrate singole
+                    if (participantSummary[income.participantName]) {
+                        participantSummary[income.participantName].income += income.amount;
+                    } else {
+                        // Se l'entrata ha un partecipante non conosciuto, aggiungilo al riepilogo
+                        participantSummary[income.participantName] = participantSummary[income.participantName] || { income: 0, expense: 0, balance: 0 };
+                        participantSummary[income.participantName].income += income.amount;
                     }
                 });
 
@@ -1137,9 +1206,13 @@
                     if (includedForThisExpense.length > 0) {
                         const costPerPerson = expense.cost / includedForThisExpense.length;
                         includedForThisExpense.forEach(pName => {
-                            // Aggiungi il partecipante al riepilogo se non era già nella lista conosciuta
-                            participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
-                            participantSummary[pName].expense += costPerPerson;
+                            if (participantSummary[pName]) { // Solo se il partecipante è nella lista conosciuta
+                                participantSummary[pName].expense += costPerPerson;
+                            } else {
+                                // Se la spesa ha un partecipante non conosciuto, aggiungilo al riepilogo
+                                participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
+                                participantSummary[pName].expense += costPerPerson;
+                            }
                         });
                     }
                 });
@@ -1190,7 +1263,7 @@
                 loadingSummary.classList.add('hidden');
 
             } catch (error) {
-                console.error("Errore nel calcolo o visualizzazione del riepilogo:", error);
+                console.error("Errore nel calcolo o visualizzazione del riepilogo generale:", error);
                 loadingSummary.textContent = 'Errore nel calcolo del riepilogo.';
                 loadingSummary.classList.remove('hidden');
                 noSummaryData.classList.remove('hidden');
@@ -1198,6 +1271,159 @@
                 totalIncomeSummaryDisplay.classList.add('hidden');
             }
         }
+
+        // --- Calcolo e Visualizzazione Riepilogo Partecipanti nella sezione Entrate ---
+        async function calculateAndDisplayParticipantSummaryInIncomeSection() {
+            if (!db || !firebaseReady) {
+                console.error("Firebase non pronto per calcolare il riepilogo nella sezione entrate.");
+                loadingIncomeSummary.textContent = 'Errore: Applicazione non pronta per il riepilogo.';
+                loadingIncomeSummary.classList.remove('hidden');
+                noIncomeSummaryData.classList.add('hidden');
+                incomeSummaryTableWrapper.classList.add('hidden');
+                totalIncomeSectionDisplay.classList.add('hidden');
+                return;
+            }
+
+            loadingIncomeSummary.classList.remove('hidden');
+            noIncomeSummaryData.classList.add('hidden');
+            incomeSummaryTableWrapper.classList.add('hidden');
+            totalIncomeSectionDisplay.classList.add('hidden');
+            incomeSummaryTableBody.innerHTML = '';
+
+            try {
+                // 1. Recupera tutti i dati necessari
+                const expensesQuerySnapshot = await getDocs(collection(db, `public_travel_expenses`));
+                const incomesQuerySnapshot = await getDocs(collection(db, `public_incomes`));
+                const knownParticipantsDoc = await getDoc(KNOWN_PARTICIPANTS_DOC_REF);
+
+                const allExpenses = [];
+                expensesQuerySnapshot.forEach(doc => allExpenses.push(doc.data()));
+
+                const allIncomes = [];
+                incomesQuerySnapshot.forEach(doc => allIncomes.push(doc.data()));
+
+                const currentKnownParticipants = knownParticipantsDoc.exists() ? knownParticipantsDoc.data().names : [];
+
+                // 2. Inizializza il riepilogo per ogni partecipante conosciuto
+                const participantSummary = {};
+                currentKnownParticipants.forEach(name => {
+                    participantSummary[name] = { income: 0, expense: 0, balance: 0 };
+                });
+
+                let totalOverallIncome = 0;
+
+                // 3. Calcola le entrate per ogni partecipante
+                allIncomes.forEach(income => {
+                    totalOverallIncome += income.amount; // Usa income.amount per le entrate singole
+                    participantSummary[income.participantName] = participantSummary[income.participantName] || { income: 0, expense: 0, balance: 0 };
+                    participantSummary[income.participantName].income += income.amount;
+                });
+
+                // 4. Calcola le spese per ogni partecipante
+                allExpenses.forEach(expense => {
+                    const includedForThisExpense = expense.includedParticipants && Array.isArray(expense.includedParticipants) && expense.includedParticipants.length > 0
+                        ? expense.includedParticipants
+                        : currentKnownParticipants;
+
+                    if (includedForThisExpense.length > 0) {
+                        const costPerPerson = expense.cost / includedForThisExpense.length;
+                        includedForThisExpense.forEach(pName => {
+                            participantSummary[pName] = participantSummary[pName] || { income: 0, expense: 0, balance: 0 };
+                            participantSummary[pName].expense += costPerPerson;
+                        });
+                    }
+                });
+
+                // 5. Calcola la differenza e renderizza la tabella di riepilogo
+                incomeSummaryTableBody.innerHTML = '';
+                let hasSummaryData = false;
+                const sortedParticipantNames = Object.keys(participantSummary).sort();
+
+                sortedParticipantNames.forEach(name => {
+                    hasSummaryData = true;
+                    const data = participantSummary[name];
+                    data.balance = data.income - data.expense;
+
+                    const row = incomeSummaryTableBody.insertRow();
+                    const nameCell = row.insertCell();
+                    const incomeCell = row.insertCell();
+                    const expenseCell = row.insertCell();
+                    const balanceCell = row.insertCell();
+
+                    nameCell.textContent = name;
+                    incomeCell.textContent = data.income.toFixed(2);
+                    expenseCell.textContent = data.expense.toFixed(2);
+                    balanceCell.textContent = data.balance.toFixed(2);
+
+                    balanceCell.classList.add(data.balance >= 0 ? 'summary-positive' : 'summary-negative');
+                    balanceCell.classList.add('font-semibold');
+
+                    nameCell.className = "px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900";
+                    incomeCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
+                    expenseCell.className = "px-3 py-2 whitespace-nowrap text-sm text-gray-500 text-right";
+                    balanceCell.className = "px-3 py-2 whitespace-nowrap text-sm text-right";
+                });
+
+
+                if (hasSummaryData) {
+                    incomeSummaryTableWrapper.classList.remove('hidden');
+                    totalIncomeSectionDisplay.classList.remove('hidden');
+                    totalIncomeSectionValue.textContent = totalOverallIncome.toFixed(2);
+                    noIncomeSummaryData.classList.add('hidden');
+                } else {
+                    incomeSummaryTableWrapper.classList.add('hidden');
+                    totalIncomeSectionDisplay.classList.add('hidden');
+                    noIncomeSummaryData.classList.remove('hidden');
+                }
+
+                loadingIncomeSummary.classList.add('hidden');
+
+            } catch (error) {
+                console.error("Errore nel calcolo o visualizzazione del riepilogo nella sezione entrate:", error);
+                loadingIncomeSummary.textContent = 'Errore nel calcolo del riepilogo.';
+                loadingIncomeSummary.classList.remove('hidden');
+                noIncomeSummaryData.classList.remove('hidden');
+                incomeSummaryTableWrapper.classList.add('hidden');
+                totalIncomeSectionDisplay.classList.add('hidden');
+            }
+        }
+
+        // --- Gestione Cancellazione Tutti i Dati ---
+        deleteAllDataBtn.addEventListener('click', () => {
+            openPasswordModal(
+                'Conferma Cancellazione Completa',
+                'ATTENZIONE: Questa operazione cancellerà TUTTE le spese, entrate e i partecipanti. Inserisci la password per confermare.',
+                async (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            const collectionsToDelete = ['public_travel_expenses', 'public_incomes'];
+                            // Per i partecipanti conosciuti, cancelliamo il documento specifico
+                            await deleteDoc(KNOWN_PARTICIPANTS_DOC_REF);
+                            console.log("Documento partecipanti conosciuti cancellato.");
+
+                            for (const collectionName of collectionsToDelete) {
+                                const q = query(collection(db, collectionName));
+                                const snapshot = await getDocs(q);
+                                if (snapshot.empty) {
+                                    console.log(`Nessun documento da cancellare in ${collectionName}.`);
+                                    continue;
+                                }
+                                const deletePromises = snapshot.docs.map(d => deleteDoc(doc(db, collectionName, d.id)));
+                                await Promise.all(deletePromises);
+                                console.log(`Tutti i documenti in ${collectionName} cancellati.`);
+                            }
+                            alert('Tutti i dati sono stati cancellati con successo!');
+                            showView('main-screen'); // Torna alla schermata principale
+                        } catch (error) {
+                            console.error("Errore durante la cancellazione di tutti i dati:", error);
+                            alert('Errore durante la cancellazione dei dati. Controlla la console per i dettagli.');
+                        }
+                    } else {
+                        console.log("Cancellazione di tutti i dati annullata o password errata.");
+                    }
+                }
+            );
+        });
 
 
         // --- Pulsanti per tornare alla schermata principale ---
