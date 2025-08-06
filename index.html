@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Spese di Viaggio</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        /* Stili per il modale */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 24rem;
+        }
+        /* Stili per i messaggi */
+        .message {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.875rem; /* sm */
+        }
+        .message.success {
+            color: #16a34a; /* green-600 */
+        }
+        .message.error {
+            color: #dc2626; /* red-600 */
+        }
+        /* Stili per il pulsante di caricamento */
+        .loading-button {
+            background-color: #6366f1; /* indigo-500 */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container" class="w-full max-w-md">
+        <!-- Contenuto dell'app verrà iniettato qui dal JavaScript -->
+        <div id="main-screen" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-6">Gestione Spese di Viaggio</h1>
+            <p class="text-gray-600 mb-8" id="initial-loading-message">
+                Caricamento applicazione...
+            </p>
+            <div class="space-y-4">
+                <button id="add-expense-btn" class="w-full py-3 px-6 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Inserisci Nuova Spesa
+                </button>
+                <button id="view-expenses-btn" class="w-full py-3 px-6 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-300 ease-in-out transform hover:scale-105" disabled>
+                    Vedi Totale Spese
+                </button>
+            </div>
+            <p id="user-id-display" class="mt-8 text-xs text-gray-500 hidden">
+                ID Utente: <span id="actual-user-id" class="font-mono break-all"></span>
+            </p>
+        </div>
+
+        <div id="add-expense-form-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-md mx-auto my-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Aggiungi Nuova Spesa</h2>
+            <form id="expense-form" class="space-y-4">
+                <div>
+                    <label for="expense-date" class="block text-sm font-medium text-gray-700 mb-1">Data:</label>
+                    <input
+                        type="date"
+                        id="expense-date"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        required
+                    />
+                </div>
+                <div>
+                    <label for="expense-cost" class="block text-sm font-medium text-gray-700 mb-1">Costo Spesa (INR):</label>
+                    <input
+                        type="number"
+                        id="expense-cost"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Es. 1500.50"
+                        step="0.01"
+                        required
+                    />
+                </div>
+                <div>
+                    <label for="expense-description" class="block text-sm font-medium text-gray-700 mb-1">Descrizione:</label>
+                    <textarea
+                        id="expense-description"
+                        rows="3"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        placeholder="Es. Biglietto aereo per Delhi, Pasto al ristorante"
+                        required
+                    ></textarea>
+                </div>
+                <button
+                    type="submit"
+                    id="submit-expense-btn"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Aggiungi Spesa
+                </button>
+            </form>
+            <p id="expense-message" class="message"></p>
+            <button
+                id="back-to-main-from-add"
+                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Torna alla schermata principale
+            </button>
+        </div>
+
+        <div id="view-expenses-list-container" class="hidden p-6 bg-white rounded-lg shadow-xl max-w-3xl mx-auto my-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Totale Spese</h2>
+            <div id="expenses-list-content">
+                <!-- La lista delle spese verrà inserita qui -->
+                <p class="text-center text-gray-600" id="loading-expenses">Caricamento spese...</p>
+                <p class="text-center text-gray-600 hidden" id="no-expenses">Nessuna spesa registrata.</p>
+                <div class="overflow-x-auto rounded-lg shadow-md mb-6 hidden" id="expenses-table-wrapper">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Data
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Costo (INR)
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Descrizione
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="expenses-table-body">
+                            <!-- Righe delle spese -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-right text-lg font-bold text-gray-800 mt-4 hidden" id="total-cost-display">
+                    Costo Totale: <span id="total-cost-value">0.00</span> INR
+                </div>
+            </div>
+            <button
+                id="back-to-main-from-view"
+                class="mt-6 w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+                Torna alla schermata principale
+            </button>
+        </div>
+    </div>
+
+    <!-- Modale Password -->
+    <div id="password-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 text-center">Inserisci Password</h3>
+            <input
+                type="password"
+                id="password-input"
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Password"
+            />
+            <p id="password-error" class="text-red-600 text-sm mt-2 text-center hidden"></p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button
+                    id="cancel-password-btn"
+                    class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Annulla
+                </button>
+                <button
+                    id="confirm-password-btn"
+                    class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                    Conferma
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // **************************************************************************************************
+        // *** ATTENZIONE: INSERISCI QUI LA TUA CONFIGURAZIONE FIREBASE PERSONALE!                     ***
+        // *** Questa configurazione è ESSENZIALE per far funzionare l'app al di fuori del Canvas.    ***
+        // *** Puoi trovarla nella console Firebase del tuo progetto, nella sezione "Impostazioni Progetto".***
+        // *** Assicurati di SOSTITUIRE TUTTI i valori placeholder (es. "YOUR_API_KEY") con i tuoi dati reali.***
+        // **************************************************************************************************
+        const firebaseConfig = {
+          apiKey: "AIzaSyCgR3_zS2BYT4bMKZ4eajOu_K80hlb0_aI",
+          authDomain: "speseviaggio.firebaseapp.com",
+          projectId: "speseviaggio",
+          storageBucket: "speseviaggio.firebasestorage.app",
+          messagingSenderId: "860769390246",
+          appId: "1:860769390246:web:9fac090b0da7a5e1e6ae67"
+        };
+
+        // Variabili per l'istanza di Firebase
+        let db;
+        let auth;
+        let currentUserId = null;
+        let firebaseReady = false;
+
+        // Funzione per mostrare/nascondere le viste
+        function showView(viewId) {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('add-expense-form-container').classList.add('hidden');
+            document.getElementById('view-expenses-list-container').classList.add('hidden');
+
+            document.getElementById(viewId).classList.remove('hidden');
+
+            // Se stiamo mostrando la vista delle spese, aggiornale
+            if (viewId === 'view-expenses-list-container') {
+                fetchAndDisplayExpenses();
+            }
+        }
+
+        // --- Inizializzazione Firebase e Autenticazione ---
+        async function initFirebase() {
+            try {
+                // Logga la configurazione usata per debugging
+                console.log("Configurazione Firebase usata:", firebaseConfig);
+
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                // Ascolta i cambiamenti dello stato di autenticazione
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        document.getElementById('actual-user-id').textContent = currentUserId;
+                        document.getElementById('user-id-display').classList.remove('hidden');
+                        firebaseReady = true;
+                        console.log("Firebase e autenticazione pronti. User ID:", currentUserId);
+                    } else {
+                        // Se non autenticato, prova ad autenticare in modo anonimo
+                        try {
+                            await signInAnonymously(auth);
+                            currentUserId = auth.currentUser?.uid || crypto.randomUUID();
+                        } catch (error) {
+                            console.error("Errore durante l'autenticazione anonima:", error);
+                            // Genera un ID casuale se l'autenticazione fallisce completamente
+                            currentUserId = crypto.randomUUID();
+                        } finally {
+                            document.getElementById('actual-user-id').textContent = currentUserId;
+                            document.getElementById('user-id-display').classList.remove('hidden');
+                            firebaseReady = true;
+                            console.log("Autenticazione completata (o fallback), User ID:", currentUserId);
+                        }
+                    }
+                    // Abilita i pulsanti e nascondi il messaggio di caricamento una volta che Firebase è pronto
+                    document.getElementById('initial-loading-message').classList.add('hidden');
+                    document.getElementById('add-expense-btn').disabled = false;
+                    document.getElementById('view-expenses-btn').disabled = false;
+                });
+            } catch (error) {
+                console.error("Errore durante l'inizializzazione di Firebase (catch esterno):", error);
+                // In caso di errore grave nell'inizializzazione, usa comunque un ID casuale e abilita i pulsanti
+                currentUserId = crypto.randomUUID();
+                document.getElementById('actual-user-id').textContent = currentUserId;
+                document.getElementById('user-id-display').classList.remove('hidden');
+                firebaseReady = true;
+                document.getElementById('initial-loading-message').classList.add('hidden');
+                document.getElementById('add-expense-btn').disabled = false;
+                document.getElementById('view-expenses-btn').disabled = false;
+            }
+        }
+
+        // --- Gestione del Modale Password ---
+        const passwordModalOverlay = document.getElementById('password-modal-overlay');
+        const passwordInput = document.getElementById('password-input');
+        const passwordError = document.getElementById('password-error');
+        const confirmPasswordBtn = document.getElementById('confirm-password-btn');
+        const cancelPasswordBtn = document.getElementById('cancel-password-btn');
+
+        document.getElementById('add-expense-btn').addEventListener('click', () => {
+            passwordInput.value = '';
+            passwordError.classList.add('hidden');
+            passwordModalOverlay.classList.remove('hidden');
+            passwordInput.focus(); // Metti il focus sul campo password
+        });
+
+        confirmPasswordBtn.addEventListener('click', () => {
+            if (passwordInput.value === 'admin') {
+                passwordModalOverlay.classList.add('hidden');
+                showView('add-expense-form-container');
+            } else {
+                passwordError.textContent = 'Password errata. Riprova.';
+                passwordError.classList.remove('hidden');
+            }
+        });
+
+        cancelPasswordBtn.addEventListener('click', () => {
+            passwordModalOverlay.classList.add('hidden');
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmPasswordBtn.click();
+            }
+        });
+
+        // --- Gestione Aggiungi Spesa ---
+        const expenseForm = document.getElementById('expense-form');
+        const expenseDateInput = document.getElementById('expense-date');
+        const expenseCostInput = document.getElementById('expense-cost');
+        const expenseDescriptionInput = document.getElementById('expense-description');
+        const expenseMessage = document.getElementById('expense-message');
+        const submitExpenseBtn = document.getElementById('submit-expense-btn');
+
+        expenseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!db || !currentUserId || !firebaseReady) {
+                expenseMessage.textContent = 'Errore: Applicazione non pronta. Riprova più tardi.';
+                expenseMessage.className = 'message error';
+                return;
+            }
+
+            const date = expenseDateInput.value;
+            const cost = parseFloat(expenseCostInput.value);
+            const description = expenseDescriptionInput.value.trim();
+
+            if (!date || isNaN(cost) || cost <= 0 || !description) {
+                expenseMessage.textContent = 'Per favore, compila tutti i campi e assicurati che il costo sia un numero positivo.';
+                expenseMessage.className = 'message error';
+                return;
+            }
+
+            submitExpenseBtn.disabled = true;
+            submitExpenseBtn.classList.add('loading-button');
+            submitExpenseBtn.textContent = 'Aggiungendo...';
+            expenseMessage.textContent = ''; // Pulisci i messaggi precedenti
+
+            try {
+                // Percorso della collezione pubblica per le spese (semplificato per uso esterno)
+                await addDoc(collection(db, `public_travel_expenses`), {
+                    date: Timestamp.fromDate(new Date(date)), // Salva come Timestamp
+                    cost: cost,
+                    description: description,
+                    timestamp: Timestamp.now() // Per l'ordinamento e la tracciabilità
+                });
+                expenseMessage.textContent = 'Spesa aggiunta con successo!';
+                expenseMessage.className = 'message success';
+                expenseDateInput.value = '';
+                expenseCostInput.value = '';
+                expenseDescriptionInput.value = '';
+            } catch (error) {
+                console.error("Errore nell'aggiungere la spesa:", error);
+                expenseMessage.textContent = 'Errore durante l\'aggiunta della spesa. Riprova.';
+                expenseMessage.className = 'message error';
+            } finally {
+                submitExpenseBtn.disabled = false;
+                submitExpenseBtn.classList.remove('loading-button');
+                submitExpenseBtn.textContent = 'Aggiungi Spesa';
+            }
+        });
+
+        // --- Gestione Visualizzazione Spese ---
+        const expensesTableBody = document.getElementById('expenses-table-body');
+        const totalCostDisplay = document.getElementById('total-cost-display');
+        const totalCostValue = document.getElementById('total-cost-value');
+        const loadingExpenses = document.getElementById('loading-expenses');
+        const noExpenses = document.getElementById('no-expenses');
+        const expensesTableWrapper = document.getElementById('expenses-table-wrapper');
+
+        document.getElementById('view-expenses-btn').addEventListener('click', () => {
+            showView('view-expenses-list-container');
+        });
+
+        function fetchAndDisplayExpenses() {
+            if (!db || !currentUserId || !firebaseReady) {
+                console.error("Firebase non pronto per recuperare le spese.");
+                loadingExpenses.textContent = 'Errore: Applicazione non pronta per recuperare le spese.';
+                loadingExpenses.classList.remove('hidden');
+                noExpenses.classList.add('hidden');
+                expensesTableWrapper.classList.add('hidden');
+                totalCostDisplay.classList.add('hidden');
+                return;
+            }
+
+            loadingExpenses.classList.remove('hidden');
+            noExpenses.classList.add('hidden');
+            expensesTableWrapper.classList.add('hidden');
+            totalCostDisplay.classList.add('hidden');
+            expensesTableBody.innerHTML = ''; // Pulisci le spese precedenti
+
+            // Percorso della collezione pubblica per le spese (semplificato per uso esterno)
+            const expensesCollectionRef = collection(db, `public_travel_expenses`);
+            const q = query(expensesCollectionRef); // Nessun ordinamento qui per evitare errori di indice
+
+            onSnapshot(q, (snapshot) => {
+                let fetchedExpenses = [];
+                snapshot.forEach(doc => {
+                    fetchedExpenses.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+
+                // Ordina le spese per data (dal più recente al più vecchio) in JavaScript
+                fetchedExpenses.sort((a, b) => {
+                    const dateA = a.date instanceof Timestamp ? a.date.toDate() : new Date(a.date);
+                    const dateB = b.date instanceof Timestamp ? b.date.toDate() : new Date(b.date);
+                    return dateB.getTime() - dateA.getTime();
+                });
+
+                expensesTableBody.innerHTML = ''; // Pulisci di nuovo prima di aggiungere
+                let totalCost = 0;
+
+                if (fetchedExpenses.length === 0) {
+                    noExpenses.classList.remove('hidden');
+                    expensesTableWrapper.classList.add('hidden');
+                    totalCostDisplay.classList.add('hidden');
+                } else {
+                    noExpenses.classList.add('hidden');
+                    expensesTableWrapper.classList.remove('hidden');
+                    totalCostDisplay.classList.remove('hidden');
+
+                    fetchedExpenses.forEach(expense => {
+                        const row = expensesTableBody.insertRow();
+                        const dateCell = row.insertCell();
+                        const costCell = row.insertCell();
+                        const descriptionCell = row.insertCell();
+
+                        const displayDate = expense.date instanceof Timestamp ? expense.date.toDate().toLocaleDateString('it-IT') : new Date(expense.date).toLocaleDateString('it-IT');
+
+                        dateCell.textContent = displayDate;
+                        costCell.textContent = expense.cost.toFixed(2);
+                        descriptionCell.textContent = expense.description;
+
+                        dateCell.className = "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900";
+                        costCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+                        descriptionCell.className = "px-6 py-4 whitespace-nowrap text-sm text-gray-500";
+
+                        totalCost += expense.cost;
+                    });
+                    totalCostValue.textContent = totalCost.toFixed(2);
+                }
+                loadingExpenses.classList.add('hidden');
+            }, (error) => {
+                console.error("Errore nel recupero delle spese:", error);
+                loadingExpenses.textContent = 'Errore nel caricamento delle spese.';
+                loadingExpenses.classList.remove('hidden');
+                noExpenses.classList.add('hidden');
+                expensesTableWrapper.classList.add('hidden');
+                totalCostDisplay.classList.add('hidden');
+            });
+        }
+
+        // --- Pulsanti per tornare alla schermata principale ---
+        document.getElementById('back-to-main-from-add').addEventListener('click', () => {
+            showView('main-screen');
+        });
+
+        document.getElementById('back-to-main-from-view').addEventListener('click', () => {
+            showView('main-screen');
+        });
+
+        // Inizializza Firebase all'apertura della pagina
+        window.onload = initFirebase;
+    </script>
+</body>
+</html>
